@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>英语单词跟读与情景对话练习助手</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="练习导航">
+        <div class="brand">
+          <span class="brand-mark">EN</span>
+          <div>
+            <h1>口语练习助手</h1>
+            <p>1.0 免费演示版</p>
+          </div>
+        </div>
+
+        <nav class="nav-tabs" aria-label="主要功能">
+          <button class="nav-tab active" data-tab="words" type="button">单词跟读</button>
+          <button class="nav-tab" data-tab="dialogue" type="button">情景对话</button>
+          <button class="nav-tab" data-tab="records" type="button">练习记录</button>
+        </nav>
+
+        <div class="status-panel">
+          <span>今日练习</span>
+          <strong id="todayCount">0</strong>
+          <small>个单词</small>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <section class="topbar">
+          <div>
+            <p class="eyebrow">武汉轻工大学外国语学院试点方向</p>
+            <h2>英语单词跟读与 AI 情景对话练习助手</h2>
+          </div>
+          <button class="ghost-button" id="resetDemo" type="button">清空演示记录</button>
+        </section>
+
+        <section class="tab-panel active" id="wordsPanel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Unit 6 Sample Words</p>
+              <h3>单词跟读</h3>
+            </div>
+            <div class="search-box">
+              <input id="wordSearch" type="search" placeholder="搜索单词或中文释义" />
+            </div>
+          </div>
+
+          <div class="word-layout">
+            <div class="word-list" id="wordList" aria-label="单词列表"></div>
+
+            <article class="practice-card" aria-live="polite">
+              <div class="word-meta">
+                <span id="wordTag">重点词</span>
+                <button class="icon-button" id="speakWord" type="button" title="播放标准发音">▶</button>
+              </div>
+              <h3 id="activeWord">automobile</h3>
+              <p class="phonetic" id="activePhonetic">/ˈɔːtəməbiːl/</p>
+              <p class="meaning" id="activeMeaning">汽车</p>
+              <div class="example-block">
+                <span>例句</span>
+                <p id="activeExample">The automobile industry is changing rapidly.</p>
+              </div>
+
+              <div class="recording-panel">
+                <button class="primary-button" id="recordButton" type="button">开始录音</button>
+                <button class="secondary-button" id="playRecord" type="button" disabled>回放录音</button>
+                <audio id="audioPlayer" controls hidden></audio>
+              </div>
+
+              <div class="mark-actions">
+                <button class="secondary-button" id="markKnown" type="button">会读了</button>
+                <button class="danger-button" id="markReview" type="button">需复习</button>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="tab-panel" id="dialoguePanel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Scenario Practice</p>
+              <h3>情景对话</h3>
+            </div>
+            <select id="scenarioSelect" aria-label="选择对话场景"></select>
+          </div>
+
+          <div class="dialogue-layout">
+            <div class="chat-box" id="chatBox" aria-live="polite"></div>
+            <form class="reply-box" id="replyForm">
+              <input id="replyInput" type="text" placeholder="用英文输入你的回答" autocomplete="off" />
+              <button class="primary-button" type="submit">发送</button>
+            </form>
+          </div>
+        </section>
+
+        <section class="tab-panel" id="recordsPanel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Local Practice Records</p>
+              <h3>练习记录</h3>
+            </div>
+          </div>
+
+          <div class="record-grid">
+            <article class="metric-card">
+              <span>已练单词</span>
+              <strong id="knownMetric">0</strong>
+            </article>
+            <article class="metric-card">
+              <span>需复习</span>
+              <strong id="reviewMetric">0</strong>
+            </article>
+            <article class="metric-card">
+              <span>对话次数</span>
+              <strong id="dialogueMetric">0</strong>
+            </article>
+          </div>
+
+          <div class="review-panel">
+            <h4>错词本</h4>
+            <div id="reviewWords" class="review-list"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
