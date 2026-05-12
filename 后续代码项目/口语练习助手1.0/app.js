@@ -127,6 +127,8 @@ const els = {
   scoreValue: document.querySelector("#scoreValue"),
   recognizedText: document.querySelector("#recognizedText"),
   scoreAdvice: document.querySelector("#scoreAdvice"),
+  manualScoreInput: document.querySelector("#manualScoreInput"),
+  manualScoreButton: document.querySelector("#manualScoreButton"),
   markKnown: document.querySelector("#markKnown"),
   markReview: document.querySelector("#markReview"),
   todayCount: document.querySelector("#todayCount"),
@@ -233,6 +235,7 @@ function resetScorePanel() {
   els.scoreValue.textContent = "--";
   els.recognizedText.textContent = "点击“朗读评分”，读出当前单词。";
   els.scoreAdvice.textContent = "免费版评分基于浏览器语音识别结果，仅用于练习参考。";
+  els.manualScoreInput.value = "";
 }
 
 function speak(text) {
@@ -323,10 +326,13 @@ function startScoring() {
   els.scoreValue.textContent = "--";
   els.recognizedText.textContent = `请读出：${activeWord().word}`;
   els.scoreAdvice.textContent = "请对着麦克风清楚朗读当前单词。系统会在 6 秒内自动结束。";
+  els.manualScoreInput.value = "";
 
   clearTimeout(state.scoringTimer);
   state.scoringTimer = window.setTimeout(() => {
-    stopScoring("timeout");
+    showNoSpeechResult("timeout");
+    forceStopRecognition();
+    finishScoring();
   }, 6000);
 
   recognition.addEventListener("result", (event) => {
@@ -378,13 +384,27 @@ function stopScoring(reason) {
     return;
   }
 
+  if (reason === "manual") {
+    showNoSpeechResult("manual");
+  }
+
+  forceStopRecognition();
+  finishScoring();
+}
+
+function forceStopRecognition() {
+  if (!state.recognition) {
+    return;
+  }
+
   try {
-    if (reason === "manual") {
-      els.scoreAdvice.textContent = "已停止本次评分。可以重新点击“朗读评分”再试一次。";
-    }
     state.recognition.stop();
   } catch {
-    finishScoring();
+    try {
+      state.recognition.abort();
+    } catch {
+      // Some browser implementations throw while already stopping.
+    }
   }
 }
 
@@ -395,6 +415,15 @@ function finishScoring() {
   state.recognition = null;
   els.scoreButton.disabled = false;
   els.scoreButton.textContent = "朗读评分";
+}
+
+function showNoSpeechResult(reason) {
+  els.scoreValue.textContent = "--";
+  els.recognizedText.textContent = "浏览器没有返回可评分的识别结果。";
+  els.scoreAdvice.textContent =
+    reason === "timeout"
+      ? "本次已自动结束。可以重试，或在下方手动输入英文进行演示评分。"
+      : "本次已停止。可以重试，或在下方手动输入英文进行演示评分。";
 }
 
 function scoreAlternatives(target, alternatives) {
@@ -450,6 +479,20 @@ function showScore(score, recognized) {
   } else {
     els.scoreAdvice.textContent = "识别差异较大。建议先听标准发音，再重新朗读。";
   }
+}
+
+function scoreManualInput() {
+  const text = els.manualScoreInput.value.trim();
+  if (!text) {
+    els.scoreValue.textContent = "--";
+    els.recognizedText.textContent = "请先输入要评分的英文。";
+    els.scoreAdvice.textContent = "例如当前单词是 banner，就输入 banner 后点击“手动评分”。";
+    return;
+  }
+
+  const score = scorePronunciation(activeWord().word, text);
+  showScore(score, text);
+  saveScore(score, text);
 }
 
 function saveScore(score, recognized) {
@@ -631,6 +674,7 @@ els.speakWord.addEventListener("click", () => speak(activeWord().word));
 els.recordButton.addEventListener("click", toggleRecording);
 els.playRecord.addEventListener("click", () => els.audioPlayer.play());
 els.scoreButton.addEventListener("click", startScoring);
+els.manualScoreButton.addEventListener("click", scoreManualInput);
 els.markKnown.addEventListener("click", () => markWord("known"));
 els.markReview.addEventListener("click", () => markWord("review"));
 els.scenarioSelect.addEventListener("change", (event) => startScenario(event.target.value));
