@@ -1,306 +1,54 @@
 const words = [
-  {
-    word: "automobile",
-    phonetic: "/ˈɔːtəməbiːl/",
-    meaning: "汽车",
-    example: "The automobile industry is changing rapidly.",
-    important: true,
-  },
-  {
-    word: "banner",
-    phonetic: "/ˈbænər/",
-    meaning: "横幅；旗帜",
-    example: "A welcome banner was hanging above the gate.",
-    important: false,
-  },
-  {
-    word: "budget",
-    phonetic: "/ˈbʌdʒɪt/",
-    meaning: "预算",
-    example: "Students should learn how to manage a monthly budget.",
-    important: true,
-  },
-  {
-    word: "cardinal",
-    phonetic: "/ˈkɑːrdɪnl/",
-    meaning: "主要的；基本的",
-    example: "Respect is a cardinal rule in communication.",
-    important: true,
-  },
-  {
-    word: "catatonic",
-    phonetic: "/ˌkætəˈtɑːnɪk/",
-    meaning: "紧张症的；木僵状态的",
-    example: "The patient appeared catatonic and did not respond.",
-    important: true,
-  },
-  {
-    word: "certificate",
-    phonetic: "/sərˈtɪfɪkət/",
-    meaning: "证书；证明",
-    example: "She received a certificate after completing the course.",
-    important: false,
-  },
-  {
-    word: "chin",
-    phonetic: "/tʃɪn/",
-    meaning: "下巴",
-    example: "He rested his chin on his hand while thinking.",
-    important: false,
-  },
-  {
-    word: "dealer",
-    phonetic: "/ˈdiːlər/",
-    meaning: "经销商；交易商",
-    example: "The dealer explained the price of the automobile.",
-    important: false,
-  },
-  {
-    word: "declare",
-    phonetic: "/dɪˈkler/",
-    meaning: "宣布；声明",
-    example: "The student stood up to declare his opinion.",
-    important: true,
-  },
-  {
-    word: "dedicate",
-    phonetic: "/ˈdedɪkeɪt/",
-    meaning: "献身；致力于",
-    example: "She decided to dedicate more time to English practice.",
-    important: true,
-  },
-  {
-    word: "deliberately",
-    phonetic: "/dɪˈlɪbərətli/",
-    meaning: "故意地；深思熟虑地",
-    example: "He spoke slowly and deliberately during the presentation.",
-    important: true,
-  },
-  {
-    word: "disapprove",
-    phonetic: "/ˌdɪsəˈpruːv/",
-    meaning: "不赞成",
-    example: "Some people disapprove of using phones in class.",
-    important: true,
-  },
-  {
-    word: "display",
-    phonetic: "/dɪˈspleɪ/",
-    meaning: "展示；陈列",
-    example: "The screen will display the word and its meaning.",
-    important: false,
-  },
-  {
-    word: "exhale",
-    phonetic: "/eksˈheɪl/",
-    meaning: "呼气",
-    example: "Take a deep breath and exhale slowly.",
-    important: true,
-  },
-  {
-    word: "feature",
-    phonetic: "/ˈfiːtʃər/",
-    meaning: "特征；以……为特色",
-    example: "This app will feature word reading and dialogue practice.",
-    important: false,
-  },
-  {
-    word: "felicity",
-    phonetic: "/fəˈlɪsəti/",
-    meaning: "幸福；恰当的表达",
-    example: "The writer was admired for the felicity of her words.",
-    important: true,
-  },
-  {
-    word: "fiction",
-    phonetic: "/ˈfɪkʃn/",
-    meaning: "小说；虚构",
-    example: "Many students enjoy reading science fiction.",
-    important: false,
-  },
-  {
-    word: "flawless",
-    phonetic: "/ˈflɔːləs/",
-    meaning: "完美无瑕的",
-    example: "Her pronunciation was almost flawless.",
-    important: true,
-  },
-  {
-    word: "force",
-    phonetic: "/fɔːrs/",
-    meaning: "力量；迫使",
-    example: "You should not force yourself to speak too fast.",
-    important: false,
-  },
-  {
-    word: "heighten",
-    phonetic: "/ˈhaɪtn/",
-    meaning: "提高；增强",
-    example: "Repeated practice can heighten your confidence.",
-    important: true,
-  },
-  {
-    word: "hormone",
-    phonetic: "/ˈhɔːrmoʊn/",
-    meaning: "激素",
-    example: "A hormone can influence changes in the body.",
-    important: false,
-  },
-  {
-    word: "inherent",
-    phonetic: "/ɪnˈhɪrənt/",
-    meaning: "固有的；内在的",
-    example: "Every language has its inherent rhythm.",
-    important: true,
-  },
-  {
-    word: "insatiability",
-    phonetic: "/ɪnˌseɪʃəˈbɪləti/",
-    meaning: "贪得无厌；无法满足",
-    example: "The story describes his insatiability for power.",
-    important: true,
-  },
-  {
-    word: "issue",
-    phonetic: "/ˈɪʃuː/",
-    meaning: "问题；发行",
-    example: "Pronunciation is an important issue for many learners.",
-    important: false,
-  },
-  {
-    word: "knave",
-    phonetic: "/neɪv/",
-    meaning: "无赖；恶棍",
-    example: "The old story describes him as a clever knave.",
-    important: true,
-  },
-  {
-    word: "laxative",
-    phonetic: "/ˈlæksətɪv/",
-    meaning: "泻药；通便的",
-    example: "The doctor mentioned a mild laxative in the treatment plan.",
-    important: true,
-  },
-  {
-    word: "license",
-    phonetic: "/ˈlaɪsns/",
-    meaning: "许可证；许可",
-    example: "You need a license to drive an automobile.",
-    important: false,
-  },
-  {
-    word: "orthopedics",
-    phonetic: "/ˌɔːrθəˈpiːdɪks/",
-    meaning: "骨科",
-    example: "Orthopedics focuses on bones and joints.",
-    important: true,
-  },
-  {
-    word: "patriotism",
-    phonetic: "/ˈpeɪtriətɪzəm/",
-    meaning: "爱国主义",
-    example: "Patriotism can be expressed through service to society.",
-    important: false,
-  },
-  {
-    word: "perception",
-    phonetic: "/pərˈsepʃn/",
-    meaning: "感知；看法",
-    example: "Practice can change your perception of speaking English.",
-    important: true,
-  },
-  {
-    word: "perpetual",
-    phonetic: "/pərˈpetʃuəl/",
-    meaning: "永久的；持续的",
-    example: "The speaker seemed to live in perpetual anxiety.",
-    important: true,
-  },
-  {
-    word: "pharmacopoeia",
-    phonetic: "/ˌfɑːrməkəˈpiːə/",
-    meaning: "药典",
-    example: "The pharmacopoeia lists official medicines and standards.",
-    important: true,
-  },
-  {
-    word: "pursuit",
-    phonetic: "/pərˈsuːt/",
-    meaning: "追求",
-    example: "The pursuit of knowledge requires patience.",
-    important: false,
-  },
-  {
-    word: "release",
-    phonetic: "/rɪˈliːs/",
-    meaning: "释放；发布",
-    example: "The team will release the first version this month.",
-    important: false,
-  },
-  {
-    word: "sake",
-    phonetic: "/seɪk/",
-    meaning: "缘故；目的",
-    example: "For the sake of practice, please read the sentence aloud.",
-    important: false,
-  },
-  {
-    word: "salve",
-    phonetic: "/sæv/",
-    meaning: "药膏；缓解",
-    example: "The salve helped reduce the pain.",
-    important: true,
-  },
-  {
-    word: "stocking",
-    phonetic: "/ˈstɑːkɪŋ/",
-    meaning: "长袜",
-    example: "She bought a pair of warm stockings.",
-    important: false,
-  },
-  {
-    word: "tablet",
-    phonetic: "/ˈtæblət/",
-    meaning: "药片；平板电脑",
-    example: "Students can use a tablet to practice speaking.",
-    important: false,
-  },
-  {
-    word: "therapy",
-    phonetic: "/ˈθerəpi/",
-    meaning: "治疗",
-    example: "Music therapy can help people relax.",
-    important: false,
-  },
-  {
-    word: "torture",
-    phonetic: "/ˈtɔːrtʃər/",
-    meaning: "折磨；拷问",
-    example: "The long wait felt like torture.",
-    important: false,
-  },
-  {
-    word: "underline",
-    phonetic: "/ˌʌndərˈlaɪn/",
-    meaning: "在……下面画线；强调",
-    example: "Please underline the words you find difficult.",
-    important: false,
-  },
-  {
-    word: "uplifting",
-    phonetic: "/ʌpˈlɪftɪŋ/",
-    meaning: "令人振奋的",
-    example: "Her speech was warm and uplifting.",
-    important: false,
-  },
-  {
-    word: "vaguely",
-    phonetic: "/ˈveɪɡli/",
-    meaning: "含糊地；模糊地",
-    example: "I vaguely remember seeing this word before.",
-    important: false,
-  },
-];
+  ["automobile", "/ˈɔːtəməbiːl/", "汽车", "The automobile industry is changing rapidly.", true],
+  ["banner", "/ˈbænər/", "横幅；旗帜", "A welcome banner was hanging above the gate.", false],
+  ["budget", "/ˈbʌdʒɪt/", "预算", "Students should learn how to manage a monthly budget.", true],
+  ["cardinal", "/ˈkɑːrdɪnl/", "主要的；基本的", "Respect is a cardinal rule in communication.", true],
+  ["catatonic", "/ˌkætəˈtɑːnɪk/", "紧张症的；木僵状态的", "The patient appeared catatonic and did not respond.", true],
+  ["certificate", "/sərˈtɪfɪkət/", "证书；证明", "She received a certificate after completing the course.", false],
+  ["chin", "/tʃɪn/", "下巴", "He rested his chin on his hand while thinking.", false],
+  ["dealer", "/ˈdiːlər/", "经销商；交易商", "The dealer explained the price of the automobile.", false],
+  ["declare", "/dɪˈkler/", "宣布；声明", "The student stood up to declare his opinion.", true],
+  ["dedicate", "/ˈdedɪkeɪt/", "献身；致力于", "She decided to dedicate more time to English practice.", true],
+  ["deliberately", "/dɪˈlɪbərətli/", "故意地；深思熟虑地", "He spoke slowly and deliberately during the presentation.", true],
+  ["disapprove", "/ˌdɪsəˈpruːv/", "不赞成", "Some people disapprove of using phones in class.", true],
+  ["display", "/dɪˈspleɪ/", "展示；陈列", "The screen will display the word and its meaning.", false],
+  ["exhale", "/eksˈheɪl/", "呼气", "Take a deep breath and exhale slowly.", true],
+  ["feature", "/ˈfiːtʃər/", "特征；以……为特色", "This app will feature word reading and dialogue practice.", false],
+  ["felicity", "/fəˈlɪsəti/", "幸福；恰当的表达", "The writer was admired for the felicity of her words.", true],
+  ["fiction", "/ˈfɪkʃn/", "小说；虚构", "Many students enjoy reading science fiction.", false],
+  ["flawless", "/ˈflɔːləs/", "完美无瑕的", "Her pronunciation was almost flawless.", true],
+  ["force", "/fɔːrs/", "力量；迫使", "You should not force yourself to speak too fast.", false],
+  ["heighten", "/ˈhaɪtn/", "提高；增强", "Repeated practice can heighten your confidence.", true],
+  ["hormone", "/ˈhɔːrmoʊn/", "激素", "A hormone can influence changes in the body.", false],
+  ["inherent", "/ɪnˈhɪrənt/", "固有的；内在的", "Every language has its inherent rhythm.", true],
+  ["insatiability", "/ɪnˌseɪʃəˈbɪləti/", "贪得无厌；无法满足", "The story describes his insatiability for power.", true],
+  ["issue", "/ˈɪʃuː/", "问题；发行", "Pronunciation is an important issue for many learners.", false],
+  ["knave", "/neɪv/", "无赖；恶棍", "The old story describes him as a clever knave.", true],
+  ["laxative", "/ˈlæksətɪv/", "泻药；通便的", "The doctor mentioned a mild laxative in the treatment plan.", true],
+  ["license", "/ˈlaɪsns/", "许可证；许可", "You need a license to drive an automobile.", false],
+  ["orthopedics", "/ˌɔːrθəˈpiːdɪks/", "骨科", "Orthopedics focuses on bones and joints.", true],
+  ["patriotism", "/ˈpeɪtriətɪzəm/", "爱国主义", "Patriotism can be expressed through service to society.", false],
+  ["perception", "/pərˈsepʃn/", "感知；看法", "Practice can change your perception of speaking English.", true],
+  ["perpetual", "/pərˈpetʃuəl/", "永久的；持续的", "The speaker seemed to live in perpetual anxiety.", true],
+  ["pharmacopoeia", "/ˌfɑːrməkəˈpiːə/", "药典", "The pharmacopoeia lists official medicines and standards.", true],
+  ["pursuit", "/pərˈsuːt/", "追求", "The pursuit of knowledge requires patience.", false],
+  ["release", "/rɪˈliːs/", "释放；发布", "The team will release the first version this month.", false],
+  ["sake", "/seɪk/", "缘故；目的", "For the sake of practice, please read the sentence aloud.", false],
+  ["salve", "/sæv/", "药膏；缓解", "The salve helped reduce the pain.", true],
+  ["stocking", "/ˈstɑːkɪŋ/", "长袜", "She bought a pair of warm stockings.", false],
+  ["tablet", "/ˈtæblət/", "药片；平板电脑", "Students can use a tablet to practice speaking.", false],
+  ["therapy", "/ˈθerəpi/", "治疗", "Music therapy can help people relax.", false],
+  ["torture", "/ˈtɔːrtʃər/", "折磨；拷问", "The long wait felt like torture.", false],
+  ["underline", "/ˌʌndərˈlaɪn/", "在……下面画线；强调", "Please underline the words you find difficult.", false],
+  ["uplifting", "/ʌpˈlɪftɪŋ/", "令人振奋的", "Her speech was warm and uplifting.", false],
+  ["vaguely", "/ˈveɪɡli/", "含糊地；模糊地", "I vaguely remember seeing this word before.", false],
+].map(([word, phonetic, meaning, example, important]) => ({
+  word,
+  phonetic,
+  meaning,
+  example,
+  important,
+}));
 
 const scenarios = [
   {
@@ -345,7 +93,7 @@ const scenarios = [
   },
 ];
 
-const storageKey = "speaking-assistant-demo-records";
+const storageKey = "speaking-assistant-demo-records-v2";
 
 const state = {
   activeWordIndex: 0,
@@ -354,12 +102,14 @@ const state = {
   audioUrl: "",
   scenario: scenarios[0],
   dialogueStep: 0,
+  recognition: null,
   records: loadRecords(),
 };
 
 const els = {
   tabs: document.querySelectorAll(".nav-tab"),
   panels: document.querySelectorAll(".tab-panel"),
+  studentName: document.querySelector("#studentName"),
   wordList: document.querySelector("#wordList"),
   wordSearch: document.querySelector("#wordSearch"),
   activeWord: document.querySelector("#activeWord"),
@@ -370,7 +120,11 @@ const els = {
   speakWord: document.querySelector("#speakWord"),
   recordButton: document.querySelector("#recordButton"),
   playRecord: document.querySelector("#playRecord"),
+  scoreButton: document.querySelector("#scoreButton"),
   audioPlayer: document.querySelector("#audioPlayer"),
+  scoreValue: document.querySelector("#scoreValue"),
+  recognizedText: document.querySelector("#recognizedText"),
+  scoreAdvice: document.querySelector("#scoreAdvice"),
   markKnown: document.querySelector("#markKnown"),
   markReview: document.querySelector("#markReview"),
   todayCount: document.querySelector("#todayCount"),
@@ -381,16 +135,29 @@ const els = {
   knownMetric: document.querySelector("#knownMetric"),
   reviewMetric: document.querySelector("#reviewMetric"),
   dialogueMetric: document.querySelector("#dialogueMetric"),
+  averageScoreMetric: document.querySelector("#averageScoreMetric"),
   reviewWords: document.querySelector("#reviewWords"),
+  scoreHistory: document.querySelector("#scoreHistory"),
+  exportRecords: document.querySelector("#exportRecords"),
   resetDemo: document.querySelector("#resetDemo"),
 };
 
+function defaultRecords() {
+  return {
+    studentName: "",
+    known: [],
+    review: [],
+    dialogues: 0,
+    practicedToday: [],
+    scores: [],
+  };
+}
+
 function loadRecords() {
-  const fallback = { known: [], review: [], dialogues: 0, practicedToday: [] };
   try {
-    return JSON.parse(localStorage.getItem(storageKey)) || fallback;
+    return { ...defaultRecords(), ...(JSON.parse(localStorage.getItem(storageKey)) || {}) };
   } catch {
-    return fallback;
+    return defaultRecords();
   }
 }
 
@@ -412,17 +179,16 @@ function removeFrom(list, value) {
   }
 }
 
+function activeWord() {
+  return words[state.activeWordIndex];
+}
+
 function renderWords(filter = "") {
   const search = filter.trim().toLowerCase();
   els.wordList.innerHTML = "";
 
   words
-    .filter((item) => {
-      return (
-        item.word.toLowerCase().includes(search) ||
-        item.meaning.toLowerCase().includes(search)
-      );
-    })
+    .filter((item) => item.word.toLowerCase().includes(search) || item.meaning.includes(search))
     .forEach((item) => {
       const realIndex = words.findIndex((word) => word.word === item.word);
       const button = document.createElement("button");
@@ -447,17 +213,24 @@ function selectWord(index) {
   state.audioUrl = "";
   els.audioPlayer.hidden = true;
   els.playRecord.disabled = true;
+  resetScorePanel();
   renderActiveWord();
   renderWords(els.wordSearch.value);
 }
 
 function renderActiveWord() {
-  const item = words[state.activeWordIndex];
+  const item = activeWord();
   els.activeWord.textContent = item.word;
   els.activePhonetic.textContent = item.phonetic;
   els.activeMeaning.textContent = item.meaning;
   els.activeExample.textContent = item.example;
   els.wordTag.textContent = item.important ? "重点词" : "练习词";
+}
+
+function resetScorePanel() {
+  els.scoreValue.textContent = "--";
+  els.recognizedText.textContent = "点击“朗读评分”，读出当前单词。";
+  els.scoreAdvice.textContent = "免费版评分基于浏览器语音识别结果，仅用于练习参考。";
 }
 
 function speak(text) {
@@ -475,7 +248,7 @@ function speak(text) {
 async function toggleRecording() {
   if (state.mediaRecorder && state.mediaRecorder.state === "recording") {
     state.mediaRecorder.stop();
-    els.recordButton.textContent = "开始录音";
+    els.recordButton.textContent = "录音跟读";
     return;
   }
 
@@ -511,8 +284,138 @@ async function toggleRecording() {
   }
 }
 
+function recognitionConstructor() {
+  return window.SpeechRecognition || window.webkitSpeechRecognition;
+}
+
+function startScoring() {
+  const SpeechRecognition = recognitionConstructor();
+  if (!SpeechRecognition) {
+    els.scoreValue.textContent = "--";
+    els.recognizedText.textContent = "当前浏览器不支持语音识别评分。";
+    els.scoreAdvice.textContent = "建议使用 Chrome 或 Edge。若学校电脑禁用语音识别，可先用录音回放和人工判断。";
+    return;
+  }
+
+  if (state.recognition) {
+    state.recognition.abort();
+  }
+
+  const recognition = new SpeechRecognition();
+  state.recognition = recognition;
+  recognition.lang = "en-US";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 3;
+
+  els.scoreButton.disabled = true;
+  els.scoreButton.textContent = "正在听...";
+  els.scoreValue.textContent = "--";
+  els.recognizedText.textContent = `请读出：${activeWord().word}`;
+  els.scoreAdvice.textContent = "请对着麦克风清楚朗读当前单词。";
+
+  recognition.addEventListener("result", (event) => {
+    const alternatives = Array.from(event.results[0]).map((result) => result.transcript);
+    const best = scoreAlternatives(activeWord().word, alternatives);
+    showScore(best.score, best.text);
+    saveScore(best.score, best.text);
+  });
+
+  recognition.addEventListener("error", () => {
+    els.scoreValue.textContent = "--";
+    els.recognizedText.textContent = "没有识别成功。";
+    els.scoreAdvice.textContent = "请检查麦克风权限，或换用 Chrome / Edge 后重试。";
+  });
+
+  recognition.addEventListener("end", () => {
+    els.scoreButton.disabled = false;
+    els.scoreButton.textContent = "朗读评分";
+  });
+
+  recognition.start();
+}
+
+function scoreAlternatives(target, alternatives) {
+  const cleaned = alternatives.map((text) => normalizeSpeechText(text)).filter(Boolean);
+  if (cleaned.length === 0) {
+    return { score: 0, text: "" };
+  }
+
+  return cleaned
+    .map((text) => ({ text, score: scorePronunciation(target, text) }))
+    .sort((a, b) => b.score - a.score)[0];
+}
+
+function normalizeSpeechText(text) {
+  return text.toLowerCase().replace(/[^a-z\s-]/g, "").trim();
+}
+
+function scorePronunciation(target, spoken) {
+  const targetText = normalizeSpeechText(target);
+  const spokenWords = spoken.split(/\s+/).filter(Boolean);
+  const candidates = spokenWords.length ? spokenWords : [spoken];
+  const bestDistance = Math.min(...candidates.map((candidate) => levenshtein(targetText, candidate)));
+  const maxLength = Math.max(targetText.length, 1);
+  const raw = Math.round((1 - bestDistance / maxLength) * 100);
+  return Math.max(0, Math.min(100, raw));
+}
+
+function levenshtein(a, b) {
+  const dp = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i += 1) dp[i][0] = i;
+  for (let j = 0; j <= b.length; j += 1) dp[0][j] = j;
+
+  for (let i = 1; i <= a.length; i += 1) {
+    for (let j = 1; j <= b.length; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+    }
+  }
+
+  return dp[a.length][b.length];
+}
+
+function showScore(score, recognized) {
+  els.scoreValue.textContent = score;
+  els.recognizedText.textContent = recognized || "未识别到有效英文";
+
+  if (score >= 90) {
+    els.scoreAdvice.textContent = "很好，识别结果与目标单词高度一致。";
+  } else if (score >= 75) {
+    els.scoreAdvice.textContent = "不错，建议再听一遍标准发音，注意重音和结尾音。";
+  } else if (score >= 55) {
+    els.scoreAdvice.textContent = "还需要练习。可以放慢速度，分音节跟读。";
+  } else {
+    els.scoreAdvice.textContent = "识别差异较大。建议先听标准发音，再重新朗读。";
+  }
+}
+
+function saveScore(score, recognized) {
+  const word = activeWord().word;
+  uniquePush(state.records.practicedToday, word);
+
+  if (score >= 80) {
+    uniquePush(state.records.known, word);
+    removeFrom(state.records.review, word);
+  } else {
+    uniquePush(state.records.review, word);
+    removeFrom(state.records.known, word);
+  }
+
+  state.records.scores.unshift({
+    studentName: state.records.studentName || "未填写",
+    word,
+    recognized,
+    score,
+    time: new Date().toLocaleString("zh-CN"),
+  });
+  state.records.scores = state.records.scores.slice(0, 80);
+  saveRecords();
+  renderWords(els.wordSearch.value);
+}
+
 function markWord(type) {
-  const word = words[state.activeWordIndex].word;
+  const word = activeWord().word;
   uniquePush(state.records.practicedToday, word);
 
   if (type === "known") {
@@ -568,27 +471,50 @@ function handleReply(event) {
   saveRecords();
 }
 
+function averageScore() {
+  if (state.records.scores.length === 0) return "--";
+  const sum = state.records.scores.reduce((total, item) => total + item.score, 0);
+  return Math.round(sum / state.records.scores.length);
+}
+
 function renderMetrics() {
   els.todayCount.textContent = state.records.practicedToday.length;
   els.knownMetric.textContent = state.records.known.length;
   els.reviewMetric.textContent = state.records.review.length;
   els.dialogueMetric.textContent = state.records.dialogues;
+  els.averageScoreMetric.textContent = averageScore();
 
   if (state.records.review.length === 0) {
-    els.reviewWords.innerHTML = "<span class=\"badge\">暂无需复习单词</span>";
-    return;
+    els.reviewWords.innerHTML = '<span class="badge">暂无需复习单词</span>';
+  } else {
+    els.reviewWords.innerHTML = state.records.review
+      .map((word) => `<button class="review-chip" type="button" data-word="${word}">${word}</button>`)
+      .join("");
+
+    els.reviewWords.querySelectorAll("[data-word]").forEach((button) => {
+      button.addEventListener("click", () => {
+        selectWord(words.findIndex((item) => item.word === button.dataset.word));
+        switchTab("words");
+      });
+    });
   }
 
-  els.reviewWords.innerHTML = state.records.review
-    .map((word) => `<button class="review-chip" type="button" data-word="${word}">${word}</button>`)
-    .join("");
-
-  els.reviewWords.querySelectorAll("[data-word]").forEach((button) => {
-    button.addEventListener("click", () => {
-      selectWord(words.findIndex((item) => item.word === button.dataset.word));
-      switchTab("words");
-    });
-  });
+  if (state.records.scores.length === 0) {
+    els.scoreHistory.innerHTML = '<p class="empty-text">暂无评分记录</p>';
+  } else {
+    els.scoreHistory.innerHTML = state.records.scores
+      .slice(0, 12)
+      .map(
+        (item) => `
+          <div class="score-row">
+            <strong>${item.word}</strong>
+            <span>${item.score} 分</span>
+            <small>${item.recognized || "未识别"} · ${item.time}</small>
+          </div>
+        `,
+      )
+      .join("");
+  }
 }
 
 function switchTab(tab) {
@@ -601,27 +527,56 @@ function switchTab(tab) {
   });
 }
 
+function exportRecords() {
+  const headers = ["学生姓名", "单词", "识别结果", "得分", "时间"];
+  const rows = state.records.scores.map((item) => [
+    item.studentName,
+    item.word,
+    item.recognized,
+    item.score,
+    item.time,
+  ]);
+  const csv = [headers, ...rows]
+    .map((row) => row.map((cell) => `"${String(cell ?? "").replace(/"/g, '""')}"`).join(","))
+    .join("\n");
+  const blob = new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `口语练习评分记录-${state.records.studentName || "学生"}.csv`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
 function resetDemo() {
-  if (!confirm("确定清空本地演示记录吗？")) {
+  if (!confirm("确定清空本地练习记录吗？")) {
     return;
   }
   localStorage.removeItem(storageKey);
   state.records = loadRecords();
+  els.studentName.value = "";
   renderWords(els.wordSearch.value);
   renderMetrics();
+  resetScorePanel();
 }
 
 els.tabs.forEach((button) => button.addEventListener("click", () => switchTab(button.dataset.tab)));
+els.studentName.addEventListener("input", (event) => {
+  state.records.studentName = event.target.value.trim();
+  saveRecords();
+});
 els.wordSearch.addEventListener("input", (event) => renderWords(event.target.value));
-els.speakWord.addEventListener("click", () => speak(words[state.activeWordIndex].word));
+els.speakWord.addEventListener("click", () => speak(activeWord().word));
 els.recordButton.addEventListener("click", toggleRecording);
 els.playRecord.addEventListener("click", () => els.audioPlayer.play());
+els.scoreButton.addEventListener("click", startScoring);
 els.markKnown.addEventListener("click", () => markWord("known"));
 els.markReview.addEventListener("click", () => markWord("review"));
 els.scenarioSelect.addEventListener("change", (event) => startScenario(event.target.value));
 els.replyForm.addEventListener("submit", handleReply);
+els.exportRecords.addEventListener("click", exportRecords);
 els.resetDemo.addEventListener("click", resetDemo);
 
+els.studentName.value = state.records.studentName || "";
 renderWords();
 renderActiveWord();
 renderScenarios();
