@@ -103,6 +103,8 @@ const state = {
   scenario: scenarios[0],
   dialogueStep: 0,
   recognition: null,
+  scoringTimer: null,
+  scoringActive: false,
   records: loadRecords(),
 };
 
@@ -289,6 +291,11 @@ function recognitionConstructor() {
 }
 
 function startScoring() {
+  if (state.scoringActive && state.recognition) {
+    stopScoring("manual");
+    return;
+  }
+
   const SpeechRecognition = recognitionConstructor();
   if (!SpeechRecognition) {
     els.scoreValue.textContent = "--";
@@ -302,37 +309,92 @@ function startScoring() {
   }
 
   const recognition = new SpeechRecognition();
+  let hasResult = false;
+  let hasError = false;
   state.recognition = recognition;
   recognition.lang = "en-US";
   recognition.continuous = false;
   recognition.interimResults = false;
   recognition.maxAlternatives = 3;
 
-  els.scoreButton.disabled = true;
-  els.scoreButton.textContent = "正在听...";
+  state.scoringActive = true;
+  els.scoreButton.disabled = false;
+  els.scoreButton.textContent = "停止评分";
   els.scoreValue.textContent = "--";
   els.recognizedText.textContent = `请读出：${activeWord().word}`;
-  els.scoreAdvice.textContent = "请对着麦克风清楚朗读当前单词。";
+  els.scoreAdvice.textContent = "请对着麦克风清楚朗读当前单词。系统会在 6 秒内自动结束。";
+
+  clearTimeout(state.scoringTimer);
+  state.scoringTimer = window.setTimeout(() => {
+    stopScoring("timeout");
+  }, 6000);
 
   recognition.addEventListener("result", (event) => {
+    hasResult = true;
     const alternatives = Array.from(event.results[0]).map((result) => result.transcript);
     const best = scoreAlternatives(activeWord().word, alternatives);
     showScore(best.score, best.text);
     saveScore(best.score, best.text);
+    stopScoring("result");
   });
 
-  recognition.addEventListener("error", () => {
+  recognition.addEventListener("speechend", () => {
+    stopScoring("speechend");
+  });
+
+  recognition.addEventListener("error", (event) => {
+    hasError = true;
     els.scoreValue.textContent = "--";
     els.recognizedText.textContent = "没有识别成功。";
-    els.scoreAdvice.textContent = "请检查麦克风权限，或换用 Chrome / Edge 后重试。";
+    els.scoreAdvice.textContent =
+      event.error === "not-allowed"
+        ? "浏览器没有麦克风权限，请允许麦克风后重试。"
+        : "请靠近麦克风，读清楚一些，或换用 Chrome / Edge 后重试。";
+    finishScoring();
   });
 
   recognition.addEventListener("end", () => {
-    els.scoreButton.disabled = false;
-    els.scoreButton.textContent = "朗读评分";
+    if (!hasResult && !hasError && state.scoringActive) {
+      els.scoreValue.textContent = "--";
+      els.recognizedText.textContent = "没有收到可评分的识别结果。";
+      els.scoreAdvice.textContent = "可以重新点击“朗读评分”，读完单词后停顿一下。";
+    }
+    finishScoring();
   });
 
-  recognition.start();
+  try {
+    recognition.start();
+  } catch {
+    els.scoreValue.textContent = "--";
+    els.recognizedText.textContent = "评分启动失败。";
+    els.scoreAdvice.textContent = "请刷新页面后重试，或先使用录音回放功能。";
+    finishScoring();
+  }
+}
+
+function stopScoring(reason) {
+  if (!state.recognition) {
+    finishScoring();
+    return;
+  }
+
+  try {
+    if (reason === "manual") {
+      els.scoreAdvice.textContent = "已停止本次评分。可以重新点击“朗读评分”再试一次。";
+    }
+    state.recognition.stop();
+  } catch {
+    finishScoring();
+  }
+}
+
+function finishScoring() {
+  clearTimeout(state.scoringTimer);
+  state.scoringTimer = null;
+  state.scoringActive = false;
+  state.recognition = null;
+  els.scoreButton.disabled = false;
+  els.scoreButton.textContent = "朗读评分";
 }
 
 function scoreAlternatives(target, alternatives) {
