@@ -142,6 +142,7 @@ const els = {
   averageScoreMetric: document.querySelector("#averageScoreMetric"),
   reviewWords: document.querySelector("#reviewWords"),
   scoreHistory: document.querySelector("#scoreHistory"),
+  openDiagnostic: document.querySelector("#openDiagnostic"),
   exportRecords: document.querySelector("#exportRecords"),
   resetDemo: document.querySelector("#resetDemo"),
 };
@@ -679,6 +680,9 @@ els.markKnown.addEventListener("click", () => markWord("known"));
 els.markReview.addEventListener("click", () => markWord("review"));
 els.scenarioSelect.addEventListener("change", (event) => startScenario(event.target.value));
 els.replyForm.addEventListener("submit", handleReply);
+els.openDiagnostic.addEventListener("click", () => {
+  window.open("speech-diagnostic.html", "_blank", "noopener,noreferrer");
+});
 els.exportRecords.addEventListener("click", exportRecords);
 els.resetDemo.addEventListener("click", resetDemo);
 

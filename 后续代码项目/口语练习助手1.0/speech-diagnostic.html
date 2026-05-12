@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>语音识别诊断 - 英语口语练习助手</title>
+    <style>
+      :root {
+        --bg: #f7f6f1;
+        --panel: #ffffff;
+        --ink: #1d2939;
+        --muted: #667085;
+        --green: #177b5a;
+        --red: #c0362c;
+        --line: #e4e7ec;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      main {
+        width: min(960px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 32px 0;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(28px, 5vw, 44px);
+        text-wrap: balance;
+      }
+
+      p {
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .panel {
+        margin-top: 18px;
+        padding: 20px;
+        border-radius: 8px;
+        background: var(--panel);
+        box-shadow: 0 18px 48px rgba(29, 41, 57, 0.1), 0 2px 8px rgba(29, 41, 57, 0.06);
+      }
+
+      .controls {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      button,
+      input {
+        min-height: 42px;
+        border-radius: 8px;
+        font: inherit;
+      }
+
+      button {
+        border: 0;
+        padding: 0 16px;
+        background: var(--green);
+        color: white;
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      button.secondary {
+        background: #eef4ff;
+        color: #2463eb;
+      }
+
+      input {
+        flex: 1 1 240px;
+        border: 1px solid var(--line);
+        padding: 0 12px;
+      }
+
+      .status-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .status-card {
+        border-radius: 8px;
+        background: #f9fafb;
+        padding: 14px;
+      }
+
+      .status-card span {
+        display: block;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .status-card strong {
+        display: block;
+        margin-top: 6px;
+        font-size: 18px;
+      }
+
+      .ok {
+        color: var(--green);
+      }
+
+      .bad {
+        color: var(--red);
+      }
+
+      pre {
+        min-height: 260px;
+        max-height: 460px;
+        overflow: auto;
+        margin: 14px 0 0;
+        padding: 14px;
+        border-radius: 8px;
+        background: #111827;
+        color: #e5e7eb;
+        line-height: 1.55;
+        white-space: pre-wrap;
+      }
+
+      a {
+        color: var(--green);
+        font-weight: 700;
+      }
+
+      @media (max-width: 720px) {
+        .status-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a href="./">返回练习助手</a>
+      <h1>语音识别诊断</h1>
+      <p>
+        这个页面用于判断当前浏览器的 SpeechRecognition 是否真的可用。请点击“开始诊断”，对着麦克风读一个英文单词，
+        例如 <strong>display</strong>。如果日志里没有出现 <strong>result</strong>，说明浏览器没有返回识别结果。
+      </p>
+
+      <section class="panel">
+        <div class="controls">
+          <input id="testWord" value="display" aria-label="测试单词" />
+          <button id="startButton" type="button">开始诊断</button>
+          <button class="secondary" id="stopButton" type="button">停止</button>
+          <button class="secondary" id="clearButton" type="button">清空日志</button>
+        </div>
+
+        <div class="status-grid">
+          <div class="status-card">
+            <span>SpeechRecognition API</span>
+            <strong id="apiStatus">检查中</strong>
+          </div>
+          <div class="status-card">
+            <span>麦克风权限</span>
+            <strong id="micStatus">未测试</strong>
+          </div>
+          <div class="status-card">
+            <span>识别结果</span>
+            <strong id="resultStatus">未测试</strong>
+          </div>
+        </div>
+
+        <pre id="logBox"></pre>
+      </section>
+    </main>
+
+    <script>
+      const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const apiStatus = document.querySelector("#apiStatus");
+      const micStatus = document.querySelector("#micStatus");
+      const resultStatus = document.querySelector("#resultStatus");
+      const logBox = document.querySelector("#logBox");
+      const testWord = document.querySelector("#testWord");
+      const startButton = document.querySelector("#startButton");
+      const stopButton = document.querySelector("#stopButton");
+      const clearButton = document.querySelector("#clearButton");
+
+      let recognition = null;
+      let timer = null;
+
+      function stamp() {
+        return new Date().toLocaleTimeString("zh-CN");
+      }
+
+      function log(message, detail = "") {
+        logBox.textContent += `[${stamp()}] ${message}${detail ? "： " + detail : ""}\n`;
+        logBox.scrollTop = logBox.scrollHeight;
+      }
+
+      function setStatus(el, text, ok) {
+        el.textContent = text;
+        el.className = ok ? "ok" : "bad";
+      }
+
+      if (Recognition) {
+        setStatus(apiStatus, "存在", true);
+        log("API 检查", "浏览器暴露了 SpeechRecognition 或 webkitSpeechRecognition");
+      } else {
+        setStatus(apiStatus, "不存在", false);
+        log("API 检查", "当前浏览器没有 SpeechRecognition");
+      }
+
+      async function checkMicrophone() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach((track) => track.stop());
+          setStatus(micStatus, "已允许", true);
+          log("麦克风检查", "getUserMedia 成功");
+          return true;
+        } catch (error) {
+          setStatus(micStatus, "不可用", false);
+          log("麦克风检查失败", error.name || String(error));
+          return false;
+        }
+      }
+
+      async function startDiagnostic() {
+        if (!Recognition) {
+          log("无法开始", "当前浏览器没有 SpeechRecognition API");
+          return;
+        }
+
+        const micOk = await checkMicrophone();
+        if (!micOk) {
+          return;
+        }
+
+        if (recognition) {
+          try {
+            recognition.abort();
+          } catch {}
+        }
+
+        recognition = new Recognition();
+        recognition.lang = "en-US";
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 3;
+        resultStatus.textContent = "等待结果";
+        resultStatus.className = "";
+
+        const expected = testWord.value.trim();
+        log("开始识别", `请读：${expected || "任意英文单词"}`);
+
+        recognition.addEventListener("start", () => log("event:start"));
+        recognition.addEventListener("audiostart", () => log("event:audiostart"));
+        recognition.addEventListener("soundstart", () => log("event:soundstart"));
+        recognition.addEventListener("speechstart", () => log("event:speechstart"));
+        recognition.addEventListener("speechend", () => log("event:speechend"));
+        recognition.addEventListener("soundend", () => log("event:soundend"));
+        recognition.addEventListener("audioend", () => log("event:audioend"));
+        recognition.addEventListener("nomatch", () => log("event:nomatch"));
+
+        recognition.addEventListener("result", (event) => {
+          const lines = [];
+          for (let i = event.resultIndex; i < event.results.length; i += 1) {
+            const result = event.results[i];
+            const alternatives = Array.from(result).map((item) => `${item.transcript} (${Math.round(item.confidence * 100)}%)`);
+            lines.push(`${result.isFinal ? "final" : "interim"} => ${alternatives.join(" | ")}`);
+          }
+          setStatus(resultStatus, "已返回", true);
+          log("event:result", lines.join(" ; "));
+        });
+
+        recognition.addEventListener("error", (event) => {
+          setStatus(resultStatus, "错误", false);
+          log("event:error", event.error || "unknown");
+        });
+
+        recognition.addEventListener("end", () => {
+          log("event:end");
+          clearTimeout(timer);
+          timer = null;
+          recognition = null;
+          if (resultStatus.textContent === "等待结果") {
+            setStatus(resultStatus, "无结果", false);
+            log("诊断结论", "API 启动了，但没有返回 result。当前浏览器/网络/系统语音服务不稳定。");
+          }
+        });
+
+        timer = window.setTimeout(() => {
+          log("超时", "8 秒内没有自然结束，强制停止");
+          stopDiagnostic();
+        }, 8000);
+
+        try {
+          recognition.start();
+        } catch (error) {
+          setStatus(resultStatus, "启动失败", false);
+          log("start() 失败", error.name || String(error));
+        }
+      }
+
+      function stopDiagnostic() {
+        clearTimeout(timer);
+        timer = null;
+        if (!recognition) {
+          log("停止", "当前没有正在运行的识别任务");
+          return;
+        }
+        try {
+          recognition.stop();
+          log("手动停止", "已调用 stop()");
+        } catch (error) {
+          log("stop() 失败，尝试 abort()", error.name || String(error));
+          try {
+            recognition.abort();
+          } catch {}
+        }
+        recognition = null;
+      }
+
+      startButton.addEventListener("click", startDiagnostic);
+      stopButton.addEventListener("click", stopDiagnostic);
+      clearButton.addEventListener("click", () => {
+        logBox.textContent = "";
+        resultStatus.textContent = "未测试";
+        resultStatus.className = "";
+      });
+    </script>
+  </body>
+</html>
