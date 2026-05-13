@@ -376,6 +376,7 @@ select:focus {
 .secondary-button,
 .danger-button,
 .score-button,
+.xf-button,
 .ghost-button {
   border-radius: 8px;
   padding: 0 16px;
@@ -400,6 +401,11 @@ select:focus {
 .score-button {
   background: #fff7d6;
   color: #8a5a00;
+}
+
+.xf-button {
+  background: #e7f8ee;
+  color: var(--green-dark);
 }
 
 .danger-button {

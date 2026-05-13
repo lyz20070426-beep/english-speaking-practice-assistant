@@ -105,6 +105,12 @@ const state = {
   recognition: null,
   scoringTimer: null,
   scoringActive: false,
+  xfScoringActive: false,
+  xfAudioContext: null,
+  xfSource: null,
+  xfProcessor: null,
+  xfStream: null,
+  xfSamples: [],
   records: loadRecords(),
 };
 
@@ -123,6 +129,7 @@ const els = {
   recordButton: document.querySelector("#recordButton"),
   playRecord: document.querySelector("#playRecord"),
   scoreButton: document.querySelector("#scoreButton"),
+  xfScoreButton: document.querySelector("#xfScoreButton"),
   audioPlayer: document.querySelector("#audioPlayer"),
   scoreValue: document.querySelector("#scoreValue"),
   recognizedText: document.querySelector("#recognizedText"),
@@ -496,6 +503,181 @@ function scoreManualInput() {
   saveScore(score, text);
 }
 
+async function startXfScore() {
+  if (state.xfScoringActive) {
+    stopXfRecording(true);
+    return;
+  }
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    showXfError("当前浏览器不支持录音，请换用 Chrome 或 Edge。");
+    return;
+  }
+
+  state.xfSamples = [];
+  state.xfScoringActive = true;
+  els.xfScoreButton.textContent = "正在录音...";
+  els.xfScoreButton.disabled = false;
+  els.scoreValue.textContent = "--";
+  els.recognizedText.textContent = `讯飞正式评分：请读出 ${activeWord().word}`;
+  els.scoreAdvice.textContent = "正在录制 3 秒音频，请清楚朗读当前单词。";
+
+  try {
+    state.xfStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    state.xfAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+    state.xfSource = state.xfAudioContext.createMediaStreamSource(state.xfStream);
+    state.xfProcessor = state.xfAudioContext.createScriptProcessor(4096, 1, 1);
+
+    state.xfProcessor.onaudioprocess = (event) => {
+      if (!state.xfScoringActive) return;
+      state.xfSamples.push(new Float32Array(event.inputBuffer.getChannelData(0)));
+    };
+
+    state.xfSource.connect(state.xfProcessor);
+    state.xfProcessor.connect(state.xfAudioContext.destination);
+
+    window.setTimeout(() => {
+      if (state.xfScoringActive) {
+        stopXfRecording(false);
+      }
+    }, 3200);
+  } catch {
+    showXfError("无法获取麦克风权限，请允许麦克风后重试。");
+    cleanupXfRecording();
+  }
+}
+
+async function stopXfRecording(manual) {
+  if (!state.xfScoringActive) return;
+  state.xfScoringActive = false;
+  els.xfScoreButton.textContent = "正在评分...";
+  els.xfScoreButton.disabled = true;
+
+  const sampleRate = state.xfAudioContext?.sampleRate || 48000;
+  const samples = mergeFloat32(state.xfSamples);
+  cleanupXfRecording();
+
+  if (manual && samples.length < sampleRate * 0.4) {
+    showXfError("录音太短，请点击“讯飞正式评分”后完整读出当前单词。");
+    return;
+  }
+
+  try {
+    const pcm = floatTo16BitPcm(downsample(samples, sampleRate, 16000));
+    const audioBase64 = arrayBufferToBase64(pcm.buffer);
+    const response = await fetch("http://127.0.0.1:8787/api/ise-score", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        text: activeWord().word,
+        category: "read_word",
+        audioBase64,
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || "讯飞评分失败");
+    }
+    showXfScore(data);
+  } catch (error) {
+    showXfError(error.message || "讯飞评分失败，请确认本地后端已启动。");
+  } finally {
+    els.xfScoreButton.disabled = false;
+    els.xfScoreButton.textContent = "讯飞正式评分";
+  }
+}
+
+function showXfScore(data) {
+  const score = data.score ?? Math.round(data.rawScore ?? 0);
+  els.scoreValue.textContent = score || "--";
+  els.recognizedText.textContent = `讯飞返回评分：${score || "--"} 分`;
+  els.scoreAdvice.textContent = [
+    data.accuracyScore != null ? `准确度 ${Math.round(data.accuracyScore)} 分` : "",
+    data.fluencyScore != null ? `流利度 ${Math.round(data.fluencyScore)} 分` : "",
+    data.integrityScore != null ? `完整度 ${Math.round(data.integrityScore)} 分` : "",
+  ]
+    .filter(Boolean)
+    .join("，") || "已收到讯飞评测结果。";
+  saveScore(score || 0, `讯飞评分 sid=${data.sid || ""}`);
+}
+
+function showXfError(message) {
+  els.scoreValue.textContent = "--";
+  els.recognizedText.textContent = "讯飞正式评分未完成。";
+  els.scoreAdvice.textContent = message;
+  els.xfScoreButton.disabled = false;
+  els.xfScoreButton.textContent = "讯飞正式评分";
+}
+
+function cleanupXfRecording() {
+  if (state.xfProcessor) {
+    state.xfProcessor.disconnect();
+    state.xfProcessor.onaudioprocess = null;
+  }
+  if (state.xfSource) {
+    state.xfSource.disconnect();
+  }
+  if (state.xfStream) {
+    state.xfStream.getTracks().forEach((track) => track.stop());
+  }
+  if (state.xfAudioContext && state.xfAudioContext.state !== "closed") {
+    state.xfAudioContext.close();
+  }
+  state.xfAudioContext = null;
+  state.xfSource = null;
+  state.xfProcessor = null;
+  state.xfStream = null;
+}
+
+function mergeFloat32(chunks) {
+  const length = chunks.reduce((total, chunk) => total + chunk.length, 0);
+  const result = new Float32Array(length);
+  let offset = 0;
+  chunks.forEach((chunk) => {
+    result.set(chunk, offset);
+    offset += chunk.length;
+  });
+  return result;
+}
+
+function downsample(samples, sourceRate, targetRate) {
+  if (sourceRate === targetRate) return samples;
+  const ratio = sourceRate / targetRate;
+  const length = Math.floor(samples.length / ratio);
+  const result = new Float32Array(length);
+  for (let i = 0; i < length; i += 1) {
+    const start = Math.floor(i * ratio);
+    const end = Math.floor((i + 1) * ratio);
+    let sum = 0;
+    let count = 0;
+    for (let j = start; j < end && j < samples.length; j += 1) {
+      sum += samples[j];
+      count += 1;
+    }
+    result[i] = count ? sum / count : 0;
+  }
+  return result;
+}
+
+function floatTo16BitPcm(samples) {
+  const pcm = new Int16Array(samples.length);
+  for (let i = 0; i < samples.length; i += 1) {
+    const sample = Math.max(-1, Math.min(1, samples[i]));
+    pcm[i] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+  }
+  return pcm;
+}
+
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
 function saveScore(score, recognized) {
   const word = activeWord().word;
   uniquePush(state.records.practicedToday, word);
@@ -675,6 +857,7 @@ els.speakWord.addEventListener("click", () => speak(activeWord().word));
 els.recordButton.addEventListener("click", toggleRecording);
 els.playRecord.addEventListener("click", () => els.audioPlayer.play());
 els.scoreButton.addEventListener("click", startScoring);
+els.xfScoreButton.addEventListener("click", startXfScore);
 els.manualScoreButton.addEventListener("click", scoreManualInput);
 els.markKnown.addEventListener("click", () => markWord("known"));
 els.markReview.addEventListener("click", () => markWord("review"));
