@@ -111,6 +111,7 @@ const state = {
   xfProcessor: null,
   xfStream: null,
   xfSamples: [],
+  xfRecordStartedAt: 0,
   records: loadRecords(),
 };
 
@@ -131,9 +132,11 @@ const els = {
   scoreButton: document.querySelector("#scoreButton"),
   xfScoreButton: document.querySelector("#xfScoreButton"),
   audioPlayer: document.querySelector("#audioPlayer"),
+  xfAudioPlayer: document.querySelector("#xfAudioPlayer"),
   scoreValue: document.querySelector("#scoreValue"),
   recognizedText: document.querySelector("#recognizedText"),
   scoreAdvice: document.querySelector("#scoreAdvice"),
+  xfAudioTip: document.querySelector("#xfAudioTip"),
   manualScoreInput: document.querySelector("#manualScoreInput"),
   manualScoreButton: document.querySelector("#manualScoreButton"),
   markKnown: document.querySelector("#markKnown"),
@@ -244,6 +247,8 @@ function resetScorePanel() {
   els.recognizedText.textContent = "点击“朗读评分”，读出当前单词。";
   els.scoreAdvice.textContent = "免费版评分基于浏览器语音识别结果，仅用于练习参考。";
   els.manualScoreInput.value = "";
+  els.xfAudioPlayer.hidden = true;
+  els.xfAudioTip.hidden = true;
 }
 
 function speak(text) {
@@ -505,7 +510,7 @@ function scoreManualInput() {
 
 async function startXfScore() {
   if (state.xfScoringActive) {
-    stopXfRecording(true);
+    stopXfRecording();
     return;
   }
 
@@ -516,11 +521,14 @@ async function startXfScore() {
 
   state.xfSamples = [];
   state.xfScoringActive = true;
-  els.xfScoreButton.textContent = "正在录音...";
+  state.xfRecordStartedAt = Date.now();
+  els.xfScoreButton.textContent = "停止并评分";
   els.xfScoreButton.disabled = false;
   els.scoreValue.textContent = "--";
   els.recognizedText.textContent = `讯飞正式评分：请读出 ${activeWord().word}`;
-  els.scoreAdvice.textContent = "正在录制 3 秒音频，请清楚朗读当前单词。";
+  els.scoreAdvice.textContent = "正在录音。请清楚读完整个单词，读完后点击“停止并评分”。";
+  els.xfAudioPlayer.hidden = true;
+  els.xfAudioTip.hidden = true;
 
   try {
     state.xfStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -538,16 +546,16 @@ async function startXfScore() {
 
     window.setTimeout(() => {
       if (state.xfScoringActive) {
-        stopXfRecording(false);
+        els.scoreAdvice.textContent = "仍在录音。读完后请点击“停止并评分”。";
       }
-    }, 3200);
+    }, 5000);
   } catch {
     showXfError("无法获取麦克风权限，请允许麦克风后重试。");
     cleanupXfRecording();
   }
 }
 
-async function stopXfRecording(manual) {
+async function stopXfRecording() {
   if (!state.xfScoringActive) return;
   state.xfScoringActive = false;
   els.xfScoreButton.textContent = "正在评分...";
@@ -555,15 +563,17 @@ async function stopXfRecording(manual) {
 
   const sampleRate = state.xfAudioContext?.sampleRate || 48000;
   const samples = mergeFloat32(state.xfSamples);
+  const durationMs = Date.now() - state.xfRecordStartedAt;
   cleanupXfRecording();
 
-  if (manual && samples.length < sampleRate * 0.4) {
-    showXfError("录音太短，请点击“讯飞正式评分”后完整读出当前单词。");
+  if (durationMs < 500 || samples.length < sampleRate * 0.4) {
+    showXfError("录音太短，请点击“讯飞正式评分”后完整读出当前单词，再点击“停止并评分”。");
     return;
   }
 
   try {
     const pcm = floatTo16BitPcm(downsample(samples, sampleRate, 16000));
+    showUploadedAudio(pcm);
     const audioBase64 = arrayBufferToBase64(pcm.buffer);
     const response = await fetch("http://127.0.0.1:8787/api/ise-score", {
       method: "POST",
@@ -587,18 +597,47 @@ async function stopXfRecording(manual) {
   }
 }
 
+function showUploadedAudio(pcm) {
+  const wav = pcmToWav(pcm, 16000);
+  const url = URL.createObjectURL(new Blob([wav], { type: "audio/wav" }));
+  if (els.xfAudioPlayer.src) {
+    URL.revokeObjectURL(els.xfAudioPlayer.src);
+  }
+  els.xfAudioPlayer.src = url;
+  els.xfAudioPlayer.hidden = false;
+  els.xfAudioTip.hidden = false;
+}
+
 function showXfScore(data) {
-  const score = data.score ?? Math.round(data.rawScore ?? 0);
-  els.scoreValue.textContent = score || "--";
-  els.recognizedText.textContent = `讯飞返回评分：${score || "--"} 分`;
+  const score = pickDisplayScore(data);
+  els.scoreValue.textContent = score ?? "--";
+  els.recognizedText.textContent = `讯飞返回评分：${score ?? "--"} 分`;
   els.scoreAdvice.textContent = [
+    data.totalScore != null ? `总分 ${Math.round(data.totalScore)} 分` : "",
     data.accuracyScore != null ? `准确度 ${Math.round(data.accuracyScore)} 分` : "",
     data.fluencyScore != null ? `流利度 ${Math.round(data.fluencyScore)} 分` : "",
     data.integrityScore != null ? `完整度 ${Math.round(data.integrityScore)} 分` : "",
+    data.phoneScore != null ? `音素 ${Math.round(data.phoneScore)} 分` : "",
+    data.wordScore != null ? `单词 ${Math.round(data.wordScore)} 分` : "",
   ]
     .filter(Boolean)
-    .join("，") || "已收到讯飞评测结果。";
-  saveScore(score || 0, `讯飞评分 sid=${data.sid || ""}`);
+    .join("，") || `已收到讯飞评测结果，但未解析到总分。sid=${data.sid || ""}`;
+  saveScore(score ?? 0, `讯飞评分 sid=${data.sid || ""}`);
+}
+
+function pickDisplayScore(data) {
+  const candidates = [
+    data.score,
+    data.totalScore,
+    data.wordScore,
+    data.accuracyScore,
+    data.standardScore,
+    data.phoneScore,
+    data.fluencyScore,
+    data.integrityScore,
+  ];
+  const value = candidates.find((item) => item !== null && item !== undefined && Number.isFinite(Number(item)));
+  return value === undefined ? null : Math.round(Number(value));
 }
 
 function showXfError(message) {
@@ -666,6 +705,32 @@ function floatTo16BitPcm(samples) {
     pcm[i] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
   }
   return pcm;
+}
+
+function pcmToWav(pcm, sampleRate) {
+  const buffer = new ArrayBuffer(44 + pcm.byteLength);
+  const view = new DataView(buffer);
+  writeAscii(view, 0, "RIFF");
+  view.setUint32(4, 36 + pcm.byteLength, true);
+  writeAscii(view, 8, "WAVE");
+  writeAscii(view, 12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeAscii(view, 36, "data");
+  view.setUint32(40, pcm.byteLength, true);
+  new Int16Array(buffer, 44).set(pcm);
+  return buffer;
+}
+
+function writeAscii(view, offset, text) {
+  for (let i = 0; i < text.length; i += 1) {
+    view.setUint8(offset + i, text.charCodeAt(i));
+  }
 }
 
 function arrayBufferToBase64(buffer) {

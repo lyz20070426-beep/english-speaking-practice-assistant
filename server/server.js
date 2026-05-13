@@ -207,26 +207,69 @@ function parseXfyunXml(xml, payload) {
   const readChapterAttrs = readAttrs(xml.match(/<read_chapter\b([^>]*)>/)?.[1] || "");
   const wordAttrs = readAttrs(xml.match(/<word\b([^>]*)>/)?.[1] || "");
   const attrs = { ...readChapterAttrs, ...readSentenceAttrs, ...readWordAttrs };
+  const scoreAttrs = collectScoreAttrs(xml);
 
   const score =
     numberValue(attrs.total_score) ??
     numberValue(wordAttrs.total_score) ??
-    numberValue(attrs.accuracy_score);
+    numberValue(attrs.accuracy_score) ??
+    firstScore(scoreAttrs, ["total_score", "total", "score", "accuracy_score"]);
 
   return {
     score: score === null ? null : Math.round(score),
     rawScore: score,
-    totalScore: numberValue(attrs.total_score),
-    accuracyScore: numberValue(attrs.accuracy_score),
-    fluencyScore: numberValue(attrs.fluency_score),
-    standardScore: numberValue(attrs.standard_score),
-    integrityScore: numberValue(attrs.integrity_score),
-    wordScore: numberValue(wordAttrs.total_score),
+    totalScore: numberValue(attrs.total_score) ?? firstScore(scoreAttrs, ["total_score", "total"]),
+    accuracyScore: numberValue(attrs.accuracy_score) ?? firstScore(scoreAttrs, ["accuracy_score", "accuracy"]),
+    fluencyScore: numberValue(attrs.fluency_score) ?? firstScore(scoreAttrs, ["fluency_score", "fluency"]),
+    standardScore: numberValue(attrs.standard_score) ?? firstScore(scoreAttrs, ["standard_score", "standard"]),
+    integrityScore: numberValue(attrs.integrity_score) ?? firstScore(scoreAttrs, ["integrity_score", "integrity"]),
+    phoneScore: firstScore(scoreAttrs, ["phone_score"]),
+    toneScore: firstScore(scoreAttrs, ["tone_score"]),
+    wordScore: numberValue(wordAttrs.total_score) ?? firstScore(scoreAttrs, ["word_score"]),
+    scoreAttrs,
     isRejected: attrs.is_rejected || null,
     exceptInfo: attrs.except_info || null,
     sid: payload?.sid || null,
     xml,
   };
+}
+
+function collectScoreAttrs(xml) {
+  const scores = {};
+  const tagPattern = /<([a-zA-Z_:-]+)\b([^>]*)>/g;
+  let tagMatch;
+  while ((tagMatch = tagPattern.exec(xml))) {
+    const tag = tagMatch[1];
+    const attrs = readAttrs(tagMatch[2] || "");
+    Object.entries(attrs).forEach(([key, value]) => {
+      if (!/score|total|accuracy|fluency|standard|integrity|phone|tone/i.test(key)) {
+        return;
+      }
+      const number = numberValue(value);
+      if (number === null) {
+        return;
+      }
+      const fullKey = `${tag}.${key}`;
+      scores[fullKey] = number;
+      if (scores[key] === undefined) {
+        scores[key] = number;
+      }
+    });
+  }
+  return scores;
+}
+
+function firstScore(scores, keys) {
+  for (const key of keys) {
+    if (scores[key] !== undefined) {
+      return scores[key];
+    }
+    const match = Object.entries(scores).find(([scoreKey]) => scoreKey.endsWith(`.${key}`));
+    if (match) {
+      return match[1];
+    }
+  }
+  return null;
 }
 
 function readAttrs(source) {

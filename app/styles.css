@@ -451,6 +451,11 @@ select:focus {
   color: var(--muted);
 }
 
+.xf-audio-tip {
+  color: var(--green-dark) !important;
+  font-weight: 700;
+}
+
 .manual-score {
   display: flex;
   grid-column: 1 / -1;
