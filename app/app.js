@@ -499,7 +499,17 @@ function showXfScore(data) {
   ]
     .filter(Boolean)
     .join("，") || `已收到讯飞评测结果，但未解析到总分。sid=${data.sid || ""}`;
-  saveScore(score ?? 0, `讯飞评分 sid=${data.sid || ""}`);
+  saveScore(score ?? 0, `讯飞评分 sid=${data.sid || ""}`, {
+    source: "讯飞正式评分",
+    sid: data.sid || "",
+    totalScore: data.totalScore,
+    accuracyScore: data.accuracyScore,
+    fluencyScore: data.fluencyScore,
+    integrityScore: data.integrityScore,
+    phoneScore: data.phoneScore,
+    standardScore: data.standardScore,
+    wordScore: data.wordScore,
+  });
 }
 
 function pickDisplayScore(data) {
@@ -641,7 +651,7 @@ function arrayBufferToBase64(buffer) {
   return btoa(binary);
 }
 
-function saveScore(score, recognized) {
+function saveScore(score, recognized, detail = {}) {
   const word = activeWord().word;
   uniquePush(state.records.practicedToday, word);
 
@@ -658,11 +668,28 @@ function saveScore(score, recognized) {
     word,
     recognized,
     score,
+    source: detail.source || "讯飞正式评分",
+    sid: detail.sid || "",
+    totalScore: normalizeScoreValue(detail.totalScore),
+    accuracyScore: normalizeScoreValue(detail.accuracyScore),
+    fluencyScore: normalizeScoreValue(detail.fluencyScore),
+    integrityScore: normalizeScoreValue(detail.integrityScore),
+    phoneScore: normalizeScoreValue(detail.phoneScore),
+    standardScore: normalizeScoreValue(detail.standardScore),
+    wordScore: normalizeScoreValue(detail.wordScore),
     time: new Date().toLocaleString("zh-CN"),
   });
   state.records.scores = state.records.scores.slice(0, 80);
   saveRecords();
   renderWords(els.wordSearch.value);
+}
+
+function normalizeScoreValue(value) {
+  if (value === undefined || value === null || value === "") {
+    return "";
+  }
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.round(number) : "";
 }
 
 function markWord(type) {
@@ -760,12 +787,24 @@ function renderMetrics() {
           <div class="score-row">
             <strong>${item.word}</strong>
             <span>${item.score} 分</span>
-            <small>${item.recognized || "未识别"} · ${item.time}</small>
+            <small>${formatScoreDetail(item)} · ${item.time}</small>
           </div>
         `,
       )
       .join("");
   }
+}
+
+function formatScoreDetail(item) {
+  const parts = [
+    item.source || "讯飞正式评分",
+    item.totalScore !== "" && item.totalScore != null ? `总分 ${item.totalScore}` : "",
+    item.accuracyScore !== "" && item.accuracyScore != null ? `准确度 ${item.accuracyScore}` : "",
+    item.wordScore !== "" && item.wordScore != null ? `单词 ${item.wordScore}` : "",
+    item.phoneScore !== "" && item.phoneScore != null ? `音素 ${item.phoneScore}` : "",
+    item.fluencyScore !== "" && item.fluencyScore != null ? `流利度 ${item.fluencyScore}` : "",
+  ].filter(Boolean);
+  return parts.join(" · ");
 }
 
 function switchTab(tab) {
@@ -779,12 +818,36 @@ function switchTab(tab) {
 }
 
 function exportRecords() {
-  const headers = ["学生姓名", "单词", "识别结果", "得分", "时间"];
+  const headers = [
+    "学生姓名",
+    "单词",
+    "评分来源",
+    "页面得分",
+    "讯飞总分",
+    "准确度",
+    "单词分",
+    "音素分",
+    "流利度",
+    "完整度",
+    "标准度",
+    "识别结果/备注",
+    "讯飞SID",
+    "时间",
+  ];
   const rows = state.records.scores.map((item) => [
     item.studentName,
     item.word,
-    item.recognized,
+    item.source || "",
     item.score,
+    item.totalScore ?? "",
+    item.accuracyScore ?? "",
+    item.wordScore ?? "",
+    item.phoneScore ?? "",
+    item.fluencyScore ?? "",
+    item.integrityScore ?? "",
+    item.standardScore ?? "",
+    item.recognized,
+    item.sid || "",
     item.time,
   ]);
   const csv = [headers, ...rows]
