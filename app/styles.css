@@ -372,6 +372,39 @@ select:focus {
   flex-wrap: wrap;
 }
 
+.mic-level {
+  display: grid;
+  grid-template-columns: auto minmax(140px, 1fr) 48px;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 0;
+  max-width: 520px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.mic-meter {
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #edf1f5;
+}
+
+.mic-meter i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--green);
+  transition-property: width;
+  transition-duration: 80ms;
+}
+
+.mic-level strong {
+  color: var(--green-dark);
+  font-variant-numeric: tabular-nums;
+}
+
 .primary-button,
 .secondary-button,
 .danger-button,

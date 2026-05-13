@@ -112,6 +112,7 @@ const state = {
   xfStream: null,
   xfSamples: [],
   xfRecordStartedAt: 0,
+  xfPeakLevel: 0,
   records: loadRecords(),
 };
 
@@ -132,6 +133,9 @@ const els = {
   xfScoreButton: document.querySelector("#xfScoreButton"),
   audioPlayer: document.querySelector("#audioPlayer"),
   xfAudioPlayer: document.querySelector("#xfAudioPlayer"),
+  micLevelPanel: document.querySelector("#micLevelPanel"),
+  micLevelBar: document.querySelector("#micLevelBar"),
+  micLevelText: document.querySelector("#micLevelText"),
   scoreValue: document.querySelector("#scoreValue"),
   recognizedText: document.querySelector("#recognizedText"),
   scoreAdvice: document.querySelector("#scoreAdvice"),
@@ -248,6 +252,7 @@ function resetScorePanel() {
   els.manualScoreInput.value = "";
   els.xfAudioPlayer.hidden = true;
   els.xfAudioTip.hidden = true;
+  resetMicLevel();
 }
 
 function speak(text) {
@@ -372,6 +377,7 @@ async function startXfScore() {
 
   state.xfSamples = [];
   state.xfScoringActive = true;
+  state.xfPeakLevel = 0;
   state.xfRecordStartedAt = Date.now();
   els.xfScoreButton.textContent = "停止并评分";
   els.xfScoreButton.disabled = false;
@@ -380,16 +386,30 @@ async function startXfScore() {
   els.scoreAdvice.textContent = "正在录音。请清楚读完整个单词，读完后点击“停止并评分”。";
   els.xfAudioPlayer.hidden = true;
   els.xfAudioTip.hidden = true;
+  els.micLevelPanel.hidden = false;
+  updateMicLevel(0);
 
   try {
-    state.xfStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    state.xfStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        autoGainControl: true,
+        channelCount: 1,
+        echoCancellation: false,
+        noiseSuppression: false,
+      },
+    });
     state.xfAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+    await state.xfAudioContext.resume();
     state.xfSource = state.xfAudioContext.createMediaStreamSource(state.xfStream);
     state.xfProcessor = state.xfAudioContext.createScriptProcessor(4096, 1, 1);
 
     state.xfProcessor.onaudioprocess = (event) => {
       if (!state.xfScoringActive) return;
-      state.xfSamples.push(new Float32Array(event.inputBuffer.getChannelData(0)));
+      const chunk = new Float32Array(event.inputBuffer.getChannelData(0));
+      state.xfSamples.push(chunk);
+      const level = calculateRmsLevel(chunk);
+      state.xfPeakLevel = Math.max(state.xfPeakLevel, level);
+      updateMicLevel(level);
     };
 
     state.xfSource.connect(state.xfProcessor);
@@ -415,10 +435,16 @@ async function stopXfRecording() {
   const sampleRate = state.xfAudioContext?.sampleRate || 48000;
   const samples = mergeFloat32(state.xfSamples);
   const durationMs = Date.now() - state.xfRecordStartedAt;
+  const peakLevel = state.xfPeakLevel;
   cleanupXfRecording();
 
   if (durationMs < 500 || samples.length < sampleRate * 0.4) {
     showXfError("录音太短，请点击“讯飞正式评分”后完整读出当前单词，再点击“停止并评分”。");
+    return;
+  }
+
+  if (peakLevel < 0.015) {
+    showXfError("本次没有录到有效声音，所以没有上传给讯飞。请确认页面上的“麦克风输入”有明显跳动，再重新评分。");
     return;
   }
 
@@ -497,6 +523,7 @@ function showXfError(message) {
   els.scoreAdvice.textContent = message;
   els.xfScoreButton.disabled = false;
   els.xfScoreButton.textContent = "讯飞正式评分";
+  resetMicLevel();
 }
 
 function cleanupXfRecording() {
@@ -517,6 +544,26 @@ function cleanupXfRecording() {
   state.xfSource = null;
   state.xfProcessor = null;
   state.xfStream = null;
+}
+
+function calculateRmsLevel(samples) {
+  if (!samples.length) return 0;
+  let sum = 0;
+  for (let i = 0; i < samples.length; i += 1) {
+    sum += samples[i] * samples[i];
+  }
+  return Math.sqrt(sum / samples.length);
+}
+
+function updateMicLevel(level) {
+  const percent = Math.min(100, Math.round(level * 420));
+  els.micLevelBar.style.width = `${percent}%`;
+  els.micLevelText.textContent = `${percent}%`;
+}
+
+function resetMicLevel() {
+  els.micLevelPanel.hidden = true;
+  updateMicLevel(0);
 }
 
 function mergeFloat32(chunks) {
