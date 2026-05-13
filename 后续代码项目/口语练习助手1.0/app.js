@@ -129,7 +129,6 @@ const els = {
   speakWord: document.querySelector("#speakWord"),
   recordButton: document.querySelector("#recordButton"),
   playRecord: document.querySelector("#playRecord"),
-  scoreButton: document.querySelector("#scoreButton"),
   xfScoreButton: document.querySelector("#xfScoreButton"),
   audioPlayer: document.querySelector("#audioPlayer"),
   xfAudioPlayer: document.querySelector("#xfAudioPlayer"),
@@ -245,7 +244,7 @@ function renderActiveWord() {
 function resetScorePanel() {
   els.scoreValue.textContent = "--";
   els.recognizedText.textContent = "点击“讯飞正式评分”，读完整个单词后停止并评分。";
-  els.scoreAdvice.textContent = "当前主流程使用讯飞正式评分。浏览器评分仅作为备用诊断功能。";
+  els.scoreAdvice.textContent = "当前主流程使用讯飞正式评分。请完整读完单词后停止并评分。";
   els.manualScoreInput.value = "";
   els.xfAudioPlayer.hidden = true;
   els.xfAudioTip.hidden = true;
@@ -300,154 +299,6 @@ async function toggleRecording() {
   } catch {
     alert("没有获取到麦克风权限，录音功能暂时不可用。");
   }
-}
-
-function recognitionConstructor() {
-  return window.SpeechRecognition || window.webkitSpeechRecognition;
-}
-
-function startScoring() {
-  if (state.scoringActive && state.recognition) {
-    stopScoring("manual");
-    return;
-  }
-
-  const SpeechRecognition = recognitionConstructor();
-  if (!SpeechRecognition) {
-    els.scoreValue.textContent = "--";
-    els.recognizedText.textContent = "当前浏览器不支持语音识别评分。";
-    els.scoreAdvice.textContent = "建议使用 Chrome 或 Edge。若学校电脑禁用语音识别，可先用录音回放和人工判断。";
-    return;
-  }
-
-  if (state.recognition) {
-    state.recognition.abort();
-  }
-
-  const recognition = new SpeechRecognition();
-  let hasResult = false;
-  let hasError = false;
-  state.recognition = recognition;
-  recognition.lang = "en-US";
-  recognition.continuous = false;
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 3;
-
-  state.scoringActive = true;
-  els.scoreButton.disabled = false;
-  els.scoreButton.textContent = "停止评分";
-  els.scoreValue.textContent = "--";
-  els.recognizedText.textContent = `请读出：${activeWord().word}`;
-  els.scoreAdvice.textContent = "请对着麦克风清楚朗读当前单词。系统会在 6 秒内自动结束。";
-  els.manualScoreInput.value = "";
-
-  clearTimeout(state.scoringTimer);
-  state.scoringTimer = window.setTimeout(() => {
-    showNoSpeechResult("timeout");
-    forceStopRecognition();
-    finishScoring();
-  }, 6000);
-
-  recognition.addEventListener("result", (event) => {
-    hasResult = true;
-    const alternatives = Array.from(event.results[0]).map((result) => result.transcript);
-    const best = scoreAlternatives(activeWord().word, alternatives);
-    showScore(best.score, best.text);
-    saveScore(best.score, best.text);
-    stopScoring("result");
-  });
-
-  recognition.addEventListener("speechend", () => {
-    stopScoring("speechend");
-  });
-
-  recognition.addEventListener("error", (event) => {
-    hasError = true;
-    els.scoreValue.textContent = "--";
-    els.recognizedText.textContent = "没有识别成功。";
-    els.scoreAdvice.textContent =
-      event.error === "not-allowed"
-        ? "浏览器没有麦克风权限，请允许麦克风后重试。"
-        : "请靠近麦克风，读清楚一些，或换用 Chrome / Edge 后重试。";
-    finishScoring();
-  });
-
-  recognition.addEventListener("end", () => {
-    if (!hasResult && !hasError && state.scoringActive) {
-      els.scoreValue.textContent = "--";
-      els.recognizedText.textContent = "没有收到可评分的识别结果。";
-      els.scoreAdvice.textContent = "可以重新点击“朗读评分”，读完单词后停顿一下。";
-    }
-    finishScoring();
-  });
-
-  try {
-    recognition.start();
-  } catch {
-    els.scoreValue.textContent = "--";
-    els.recognizedText.textContent = "评分启动失败。";
-    els.scoreAdvice.textContent = "请刷新页面后重试，或先使用录音回放功能。";
-    finishScoring();
-  }
-}
-
-function stopScoring(reason) {
-  if (!state.recognition) {
-    finishScoring();
-    return;
-  }
-
-  if (reason === "manual") {
-    showNoSpeechResult("manual");
-  }
-
-  forceStopRecognition();
-  finishScoring();
-}
-
-function forceStopRecognition() {
-  if (!state.recognition) {
-    return;
-  }
-
-  try {
-    state.recognition.stop();
-  } catch {
-    try {
-      state.recognition.abort();
-    } catch {
-      // Some browser implementations throw while already stopping.
-    }
-  }
-}
-
-function finishScoring() {
-  clearTimeout(state.scoringTimer);
-  state.scoringTimer = null;
-  state.scoringActive = false;
-  state.recognition = null;
-  els.scoreButton.disabled = false;
-  els.scoreButton.textContent = "朗读评分";
-}
-
-function showNoSpeechResult(reason) {
-  els.scoreValue.textContent = "--";
-  els.recognizedText.textContent = "浏览器没有返回可评分的识别结果。";
-  els.scoreAdvice.textContent =
-    reason === "timeout"
-      ? "本次已自动结束。可以重试，或在下方手动输入英文进行演示评分。"
-      : "本次已停止。可以重试，或在下方手动输入英文进行演示评分。";
-}
-
-function scoreAlternatives(target, alternatives) {
-  const cleaned = alternatives.map((text) => normalizeSpeechText(text)).filter(Boolean);
-  if (cleaned.length === 0) {
-    return { score: 0, text: "" };
-  }
-
-  return cleaned
-    .map((text) => ({ text, score: scorePronunciation(target, text) }))
-    .sort((a, b) => b.score - a.score)[0];
 }
 
 function normalizeSpeechText(text) {
@@ -921,7 +772,6 @@ els.wordSearch.addEventListener("input", (event) => renderWords(event.target.val
 els.speakWord.addEventListener("click", () => speak(activeWord().word));
 els.recordButton.addEventListener("click", toggleRecording);
 els.playRecord.addEventListener("click", () => els.audioPlayer.play());
-els.scoreButton.addEventListener("click", startScoring);
 els.xfScoreButton.addEventListener("click", startXfScore);
 els.manualScoreButton.addEventListener("click", scoreManualInput);
 els.markKnown.addEventListener("click", () => markWord("known"));
