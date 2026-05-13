@@ -78,8 +78,8 @@
               <div class="recording-panel">
                 <button class="primary-button" id="recordButton" type="button">录音跟读</button>
                 <button class="secondary-button" id="playRecord" type="button" disabled>回放录音</button>
-                <button class="score-button" id="scoreButton" type="button">朗读评分</button>
                 <button class="xf-button" id="xfScoreButton" type="button">讯飞正式评分</button>
+                <button class="score-button optional-score" id="scoreButton" type="button">浏览器评分</button>
                 <audio id="audioPlayer" controls hidden></audio>
                 <audio id="xfAudioPlayer" controls hidden></audio>
               </div>
@@ -91,9 +91,9 @@
                 </div>
                 <div>
                   <span>识别结果</span>
-                  <p id="recognizedText">点击“朗读评分”，读出当前单词。</p>
+                  <p id="recognizedText">点击“讯飞正式评分”，读完整个单词后停止并评分。</p>
                 </div>
-                <p id="scoreAdvice">免费版评分基于浏览器语音识别结果，仅用于练习参考。</p>
+                <p id="scoreAdvice">当前主流程使用讯飞正式评分。浏览器评分仅作为备用诊断功能。</p>
                 <p class="xf-audio-tip" id="xfAudioTip" hidden>已保留本次上传给讯飞的录音，可先回放确认是否录清楚。</p>
                 <div class="manual-score">
                   <input id="manualScoreInput" type="text" placeholder="识别失败时，可手动输入听到的英文" />

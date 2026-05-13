@@ -244,8 +244,8 @@ function renderActiveWord() {
 
 function resetScorePanel() {
   els.scoreValue.textContent = "--";
-  els.recognizedText.textContent = "点击“朗读评分”，读出当前单词。";
-  els.scoreAdvice.textContent = "免费版评分基于浏览器语音识别结果，仅用于练习参考。";
+  els.recognizedText.textContent = "点击“讯飞正式评分”，读完整个单词后停止并评分。";
+  els.scoreAdvice.textContent = "当前主流程使用讯飞正式评分。浏览器评分仅作为备用诊断功能。";
   els.manualScoreInput.value = "";
   els.xfAudioPlayer.hidden = true;
   els.xfAudioTip.hidden = true;

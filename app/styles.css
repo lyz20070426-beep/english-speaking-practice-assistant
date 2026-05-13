@@ -403,9 +403,14 @@ select:focus {
   color: #8a5a00;
 }
 
+.optional-score {
+  opacity: 0.72;
+}
+
 .xf-button {
-  background: #e7f8ee;
-  color: var(--green-dark);
+  background: var(--green);
+  color: white;
+  box-shadow: 0 8px 22px rgba(23, 123, 90, 0.18);
 }
 
 .danger-button {
