@@ -67,15 +67,14 @@ button:active {
 }
 
 .brand-mark {
-  display: grid;
   width: 54px;
   height: 54px;
-  place-items: center;
-  border-radius: 12px;
-  background: #f2c94c;
-  color: #173d34;
-  font-weight: 800;
-  letter-spacing: 0;
+  flex: 0 0 54px;
+  border: 2px solid rgba(255, 255, 255, 0.72);
+  border-radius: 50%;
+  background: white;
+  object-fit: cover;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
 }
 
 .brand h1,
