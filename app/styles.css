@@ -123,9 +123,13 @@ button:active {
   background: rgba(255, 255, 255, 0.1);
 }
 
-.student-box {
+.student-box,
+.student-box label {
   display: grid;
   gap: 8px;
+}
+
+.student-box {
   color: rgba(255, 255, 255, 0.78);
   font-size: 13px;
 }
@@ -146,6 +150,18 @@ button:active {
 
 .student-box input:focus {
   box-shadow: 0 0 0 3px rgba(242, 201, 76, 0.28);
+}
+
+.student-box p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.student-box p.is-warning {
+  color: #f2c94c;
+  font-weight: 700;
 }
 
 .status-panel span,
@@ -372,6 +388,45 @@ select:focus {
   flex-wrap: wrap;
 }
 
+.mic-device-panel {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin-top: 14px;
+  max-width: 640px;
+}
+
+.mic-device-panel label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.mic-device-panel p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.mic-device-panel.is-ok p {
+  color: var(--green-dark);
+  font-weight: 700;
+}
+
+.mic-device-panel.is-warning p {
+  color: var(--amber);
+  font-weight: 700;
+}
+
+.mic-device-panel.is-error p {
+  color: var(--red);
+  font-weight: 700;
+}
+
 .mic-level {
   display: grid;
   grid-template-columns: auto minmax(140px, 1fr) 48px;
@@ -588,6 +643,143 @@ button:disabled {
   gap: 14px;
 }
 
+.teacher-note {
+  margin-bottom: 16px;
+  border-left: 4px solid var(--green);
+  border-radius: 8px;
+  background: #edf7f2;
+  color: var(--green-dark);
+  padding: 12px 14px;
+  line-height: 1.6;
+}
+
+.teacher-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+  gap: 14px;
+}
+
+.teacher-content-layout {
+  margin-top: 14px;
+}
+
+.teacher-table {
+  overflow-x: auto;
+}
+
+.teacher-row {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) 120px 90px 80px 80px minmax(130px, 1fr) minmax(150px, 1fr) minmax(190px, 1.2fr);
+  gap: 10px;
+  align-items: center;
+  min-width: 1220px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.teacher-row:last-child {
+  border-bottom: 0;
+}
+
+.teacher-row span {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.teacher-row-head span {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.teacher-weak-list {
+  display: grid;
+  gap: 10px;
+}
+
+.weak-word-card {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  min-height: 64px;
+  border-radius: 8px;
+  background: #fff4e5;
+  color: var(--amber);
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.weak-word-card strong {
+  color: var(--ink);
+}
+
+.weak-word-card span {
+  font-size: 13px;
+}
+
+.content-help,
+.content-status {
+  margin: 0 0 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.word-bank-input {
+  width: 100%;
+  min-height: 180px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  outline: none;
+  padding: 12px;
+  font: inherit;
+  line-height: 1.5;
+}
+
+.word-bank-input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 4px rgba(23, 123, 90, 0.12);
+}
+
+.content-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+.content-status.is-ok {
+  color: var(--green-dark);
+  font-weight: 700;
+}
+
+.content-status.is-error {
+  color: var(--red);
+  font-weight: 700;
+}
+
+.word-bank-info {
+  display: grid;
+  gap: 10px;
+}
+
+.word-bank-item {
+  display: grid;
+  gap: 4px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+
+.word-bank-item:last-child {
+  border-bottom: 0;
+}
+
+.word-bank-item span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .review-panel h4 {
   margin: 0 0 16px;
   font-size: 20px;
@@ -633,6 +825,11 @@ button:disabled {
   line-height: 1.45;
 }
 
+.score-comment {
+  color: var(--green-dark) !important;
+  font-weight: 700;
+}
+
 .empty-text {
   margin: 0;
   color: var(--muted);
@@ -675,7 +872,9 @@ button:disabled {
   .word-layout,
   .record-grid,
   .records-layout,
-  .score-panel {
+  .teacher-layout,
+  .score-panel,
+  .mic-device-panel {
     grid-template-columns: 1fr;
   }
 

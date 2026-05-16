@@ -1,4 +1,7 @@
-const words = [
+const wordBankKey = "speaking-assistant-word-bank-v1";
+const scenarioBankKey = "speaking-assistant-scenario-bank-v1";
+
+const defaultWords = [
   ["automobile", "/ˈɔːtəməbiːl/", "汽车", "The automobile industry is changing rapidly.", true],
   ["banner", "/ˈbænər/", "横幅；旗帜", "A welcome banner was hanging above the gate.", false],
   ["budget", "/ˈbʌdʒɪt/", "预算", "Students should learn how to manage a monthly budget.", true],
@@ -50,7 +53,9 @@ const words = [
   important,
 }));
 
-const scenarios = [
+let words = loadWordBank();
+
+const defaultScenarios = [
   {
     id: "intro",
     title: "自我介绍",
@@ -93,6 +98,8 @@ const scenarios = [
   },
 ];
 
+let scenarios = loadScenarioBank();
+
 const storageKey = "speaking-assistant-demo-records-v2";
 
 const state = {
@@ -113,6 +120,7 @@ const state = {
   xfSamples: [],
   xfRecordStartedAt: 0,
   xfPeakLevel: 0,
+  selectedAudioDeviceId: "",
   records: loadRecords(),
 };
 
@@ -120,6 +128,10 @@ const els = {
   tabs: document.querySelectorAll(".nav-tab"),
   panels: document.querySelectorAll(".tab-panel"),
   studentName: document.querySelector("#studentName"),
+  studentPhone: document.querySelector("#studentPhone"),
+  studentNo: document.querySelector("#studentNo"),
+  studentClass: document.querySelector("#studentClass"),
+  studentIdentityHint: document.querySelector("#studentIdentityHint"),
   wordList: document.querySelector("#wordList"),
   wordSearch: document.querySelector("#wordSearch"),
   activeWord: document.querySelector("#activeWord"),
@@ -133,6 +145,9 @@ const els = {
   xfScoreButton: document.querySelector("#xfScoreButton"),
   audioPlayer: document.querySelector("#audioPlayer"),
   xfAudioPlayer: document.querySelector("#xfAudioPlayer"),
+  audioInputSelect: document.querySelector("#audioInputSelect"),
+  checkMicButton: document.querySelector("#checkMicButton"),
+  micDeviceStatus: document.querySelector("#micDeviceStatus"),
   micLevelPanel: document.querySelector("#micLevelPanel"),
   micLevelBar: document.querySelector("#micLevelBar"),
   micLevelText: document.querySelector("#micLevelText"),
@@ -155,6 +170,19 @@ const els = {
   averageScoreMetric: document.querySelector("#averageScoreMetric"),
   reviewWords: document.querySelector("#reviewWords"),
   scoreHistory: document.querySelector("#scoreHistory"),
+  teacherSummary: document.querySelector("#teacherSummary"),
+  teacherStudentTable: document.querySelector("#teacherStudentTable"),
+  teacherWeakWords: document.querySelector("#teacherWeakWords"),
+  wordBankText: document.querySelector("#wordBankText"),
+  importWordBank: document.querySelector("#importWordBank"),
+  resetWordBank: document.querySelector("#resetWordBank"),
+  wordBankStatus: document.querySelector("#wordBankStatus"),
+  wordBankInfo: document.querySelector("#wordBankInfo"),
+  scenarioBankText: document.querySelector("#scenarioBankText"),
+  importScenarioBank: document.querySelector("#importScenarioBank"),
+  resetScenarioBank: document.querySelector("#resetScenarioBank"),
+  scenarioBankStatus: document.querySelector("#scenarioBankStatus"),
+  scenarioBankInfo: document.querySelector("#scenarioBankInfo"),
   openDiagnostic: document.querySelector("#openDiagnostic"),
   exportRecords: document.querySelector("#exportRecords"),
   resetDemo: document.querySelector("#resetDemo"),
@@ -163,6 +191,9 @@ const els = {
 function defaultRecords() {
   return {
     studentName: "",
+    studentPhone: "",
+    studentNo: "",
+    studentClass: "",
     known: [],
     review: [],
     dialogues: 0,
@@ -179,9 +210,92 @@ function loadRecords() {
   }
 }
 
+function loadWordBank() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(wordBankKey) || "null");
+    if (Array.isArray(saved) && saved.length > 0) {
+      return saved.map(normalizeWordItem).filter(Boolean);
+    }
+  } catch {
+    localStorage.removeItem(wordBankKey);
+  }
+  return [...defaultWords];
+}
+
+function loadScenarioBank() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(scenarioBankKey) || "null");
+    if (Array.isArray(saved) && saved.length > 0) {
+      const normalized = saved.map(normalizeScenarioItem).filter(Boolean);
+      if (normalized.length > 0) return normalized;
+    }
+  } catch {
+    localStorage.removeItem(scenarioBankKey);
+  }
+  return [...defaultScenarios];
+}
+
+function normalizeWordItem(item) {
+  if (!item || !item.word) return null;
+  return {
+    word: String(item.word).trim(),
+    phonetic: String(item.phonetic || "").trim(),
+    meaning: String(item.meaning || "").trim(),
+    example: String(item.example || "").trim(),
+    important: Boolean(item.important),
+  };
+}
+
+function normalizeScenarioItem(item) {
+  if (!item || !item.title || !item.opening) return null;
+  const replies = Array.isArray(item.replies)
+    ? item.replies.map((reply) => String(reply).trim()).filter(Boolean)
+    : [];
+  return {
+    id: String(item.id || item.title).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-") || `scenario-${Date.now()}`,
+    title: String(item.title).trim(),
+    opening: String(item.opening).trim(),
+    replies: replies.length ? replies : ["Good practice. Please add one more detail in English."],
+  };
+}
+
+function saveWordBank() {
+  localStorage.setItem(wordBankKey, JSON.stringify(words));
+  renderWordBankInfo();
+}
+
+function saveScenarioBank() {
+  localStorage.setItem(scenarioBankKey, JSON.stringify(scenarios));
+  renderScenarioBankInfo();
+}
+
 function saveRecords() {
   localStorage.setItem(storageKey, JSON.stringify(state.records));
   renderMetrics();
+}
+
+function currentStudentProfile() {
+  return {
+    studentName: state.records.studentName || "未填写",
+    studentPhone: state.records.studentPhone || "",
+    studentNo: state.records.studentNo || "",
+    studentClass: state.records.studentClass || "",
+    studentKey: state.records.studentPhone || state.records.studentNo || state.records.studentName || "未填写",
+  };
+}
+
+function updateStudentIdentityHint() {
+  if (!els.studentIdentityHint) return;
+  const hasName = Boolean(state.records.studentName);
+  const hasPhone = /^1\d{10}$/.test(state.records.studentPhone || "");
+
+  if (!hasName || !hasPhone) {
+    els.studentIdentityHint.textContent = "建议填写姓名和 11 位手机号，老师后台会按手机号区分学生。";
+    els.studentIdentityHint.classList.add("is-warning");
+  } else {
+    els.studentIdentityHint.textContent = "学生身份已保存，练习记录会自动带上这些信息。";
+    els.studentIdentityHint.classList.remove("is-warning");
+  }
 }
 
 function uniquePush(list, value) {
@@ -227,6 +341,9 @@ function renderWords(filter = "") {
 }
 
 function selectWord(index) {
+  if (index < 0 || index >= words.length) {
+    return;
+  }
   state.activeWordIndex = index;
   state.audioUrl = "";
   els.audioPlayer.hidden = true;
@@ -267,6 +384,114 @@ function speak(text) {
   window.speechSynthesis.speak(utterance);
 }
 
+function audioConstraints(options = {}) {
+  const base = {
+    autoGainControl: true,
+    channelCount: 1,
+    echoCancellation: false,
+    noiseSuppression: false,
+    ...options,
+  };
+
+  if (state.selectedAudioDeviceId) {
+    base.deviceId = { exact: state.selectedAudioDeviceId };
+  }
+
+  return { audio: base };
+}
+
+function setMicDeviceStatus(message, type = "") {
+  const panel = els.micDeviceStatus?.closest(".mic-device-panel");
+  if (!panel) return;
+  panel.classList.toggle("is-ok", type === "ok");
+  panel.classList.toggle("is-warning", type === "warning");
+  panel.classList.toggle("is-error", type === "error");
+  els.micDeviceStatus.textContent = message;
+}
+
+async function refreshAudioInputs() {
+  if (!navigator.mediaDevices?.enumerateDevices) {
+    setMicDeviceStatus("当前浏览器不支持麦克风设备选择，请换用 Chrome。", "error");
+    return;
+  }
+
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  const inputs = devices.filter((device) => device.kind === "audioinput");
+  const current = state.selectedAudioDeviceId;
+  els.audioInputSelect.innerHTML = `<option value="">默认麦克风</option>`;
+
+  inputs.forEach((device, index) => {
+    const option = document.createElement("option");
+    option.value = device.deviceId;
+    option.textContent = device.label || `麦克风 ${index + 1}`;
+    els.audioInputSelect.appendChild(option);
+  });
+
+  if (current && inputs.some((device) => device.deviceId === current)) {
+    els.audioInputSelect.value = current;
+  } else {
+    state.selectedAudioDeviceId = "";
+    els.audioInputSelect.value = "";
+  }
+}
+
+async function requestMicStream() {
+  return navigator.mediaDevices.getUserMedia(audioConstraints());
+}
+
+async function checkMicrophone() {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    setMicDeviceStatus("当前浏览器不支持网页录音，请换用 Chrome。", "error");
+    return;
+  }
+
+  els.checkMicButton.disabled = true;
+  els.checkMicButton.textContent = "检测中";
+  els.micLevelPanel.hidden = false;
+  updateMicLevel(0);
+  setMicDeviceStatus("正在检测麦克风，请正常读一个英文单词。", "warning");
+
+  let stream;
+  let audioContext;
+  let source;
+  let processor;
+  let peak = 0;
+
+  try {
+    stream = await requestMicStream();
+    await refreshAudioInputs();
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    await audioContext.resume();
+    source = audioContext.createMediaStreamSource(stream);
+    processor = audioContext.createScriptProcessor(2048, 1, 1);
+    processor.onaudioprocess = (event) => {
+      const level = calculateRmsLevel(event.inputBuffer.getChannelData(0));
+      peak = Math.max(peak, level);
+      updateMicLevel(level);
+    };
+    source.connect(processor);
+    processor.connect(audioContext.destination);
+
+    await new Promise((resolve) => window.setTimeout(resolve, 2500));
+
+    if (peak >= 0.015) {
+      setMicDeviceStatus("麦克风检测正常，可以开始讯飞正式评分。", "ok");
+    } else {
+      setMicDeviceStatus("没有检测到有效声音。请切换麦克风设备、换浏览器，或检查系统输入设备。", "error");
+    }
+  } catch {
+    setMicDeviceStatus("无法获取麦克风权限。请允许浏览器使用麦克风后重试。", "error");
+  } finally {
+    if (processor) processor.disconnect();
+    if (source) source.disconnect();
+    if (stream) stream.getTracks().forEach((track) => track.stop());
+    if (audioContext && audioContext.state !== "closed") audioContext.close();
+    els.checkMicButton.disabled = false;
+    els.checkMicButton.textContent = "检测麦克风";
+    resetMicLevel();
+  }
+}
+
 async function toggleRecording() {
   if (state.mediaRecorder && state.mediaRecorder.state === "recording") {
     state.mediaRecorder.stop();
@@ -280,7 +505,8 @@ async function toggleRecording() {
   }
 
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const stream = await requestMicStream();
+    await refreshAudioInputs();
     state.audioChunks = [];
     state.mediaRecorder = new MediaRecorder(stream);
 
@@ -390,14 +616,8 @@ async function startXfScore() {
   updateMicLevel(0);
 
   try {
-    state.xfStream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        autoGainControl: true,
-        channelCount: 1,
-        echoCancellation: false,
-        noiseSuppression: false,
-      },
-    });
+    state.xfStream = await requestMicStream();
+    await refreshAudioInputs();
     state.xfAudioContext = new (window.AudioContext || window.webkitAudioContext)();
     await state.xfAudioContext.resume();
     state.xfSource = state.xfAudioContext.createMediaStreamSource(state.xfStream);
@@ -653,6 +873,8 @@ function arrayBufferToBase64(buffer) {
 
 function saveScore(score, recognized, detail = {}) {
   const word = activeWord().word;
+  const comment = buildScoreComment(score, detail);
+  const profile = currentStudentProfile();
   uniquePush(state.records.practicedToday, word);
 
   if (score >= 80) {
@@ -664,7 +886,7 @@ function saveScore(score, recognized, detail = {}) {
   }
 
   state.records.scores.unshift({
-    studentName: state.records.studentName || "未填写",
+    ...profile,
     word,
     recognized,
     score,
@@ -677,11 +899,36 @@ function saveScore(score, recognized, detail = {}) {
     phoneScore: normalizeScoreValue(detail.phoneScore),
     standardScore: normalizeScoreValue(detail.standardScore),
     wordScore: normalizeScoreValue(detail.wordScore),
+    comment,
     time: new Date().toLocaleString("zh-CN"),
   });
   state.records.scores = state.records.scores.slice(0, 80);
   saveRecords();
   renderWords(els.wordSearch.value);
+}
+
+function buildScoreComment(score, detail = {}) {
+  const accuracy = normalizeScoreValue(detail.accuracyScore);
+  const fluency = normalizeScoreValue(detail.fluencyScore);
+  const phone = normalizeScoreValue(detail.phoneScore);
+  const weakParts = [];
+
+  if (accuracy !== "" && accuracy < 75) weakParts.push("发音准确度");
+  if (fluency !== "" && fluency < 75) weakParts.push("朗读流利度");
+  if (phone !== "" && phone < 75) weakParts.push("音素清晰度");
+
+  if (score >= 90) {
+    return "优秀：读音清楚，整体表现稳定，可继续挑战句子朗读。";
+  }
+  if (score >= 80) {
+    return "良好：基本会读，建议再跟读 1-2 遍，重点保持重音和结尾音。";
+  }
+  if (score >= 60) {
+    return weakParts.length
+      ? `需加强：${weakParts.join("、")}偏弱，建议先听标准发音，再慢速跟读。`
+      : "需加强：读音和目标单词仍有差距，建议分音节练习后再评分。";
+  }
+  return "重点复习：本次识别差异较大，建议先确认麦克风录音清楚，再听标准发音重新练习。";
 }
 
 function normalizeScoreValue(value) {
@@ -716,6 +963,7 @@ function renderScenarios() {
 
 function startScenario(id) {
   state.scenario = scenarios.find((scenario) => scenario.id === id) || scenarios[0];
+  if (!state.scenario) return;
   state.dialogueStep = 0;
   els.chatBox.innerHTML = "";
   addMessage(state.scenario.opening, "system");
@@ -761,6 +1009,10 @@ function renderMetrics() {
   els.reviewMetric.textContent = state.records.review.length;
   els.dialogueMetric.textContent = state.records.dialogues;
   els.averageScoreMetric.textContent = averageScore();
+  renderTeacherDashboard();
+  renderWordBankInfo();
+  renderScenarioBankInfo();
+  updateStudentIdentityHint();
 
   if (state.records.review.length === 0) {
     els.reviewWords.innerHTML = '<span class="badge">暂无需复习单词</span>';
@@ -788,11 +1040,362 @@ function renderMetrics() {
             <strong>${item.word}</strong>
             <span>${item.score} 分</span>
             <small>${formatScoreDetail(item)} · ${item.time}</small>
+            <small class="score-comment">${item.comment || buildScoreComment(Number(item.score) || 0, item)}</small>
           </div>
         `,
       )
       .join("");
   }
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function buildTeacherStats() {
+  const students = new Map();
+  const weakWords = new Map();
+
+  state.records.scores.forEach((item) => {
+    const key = item.studentKey || item.studentPhone || item.studentNo || item.studentName || "未填写";
+    if (!students.has(key)) {
+      students.set(key, {
+        name: item.studentName || "未填写",
+        phone: item.studentPhone || "",
+        studentNo: item.studentNo || "",
+        studentClass: item.studentClass || "",
+        count: 0,
+        total: 0,
+        latest: "",
+        reviewWords: new Set(),
+      });
+    }
+
+    const student = students.get(key);
+    const score = Number(item.score) || 0;
+    student.count += 1;
+    student.total += score;
+    student.latest = student.latest || item.time;
+
+    if (score < 80) {
+      student.reviewWords.add(item.word);
+      const weak = weakWords.get(item.word) || { word: item.word, count: 0, total: 0 };
+      weak.count += 1;
+      weak.total += score;
+      weakWords.set(item.word, weak);
+    }
+  });
+
+  return {
+    students: [...students.values()].map((student) => ({
+      ...student,
+      average: student.count ? Math.round(student.total / student.count) : 0,
+      reviewWords: [...student.reviewWords],
+    })),
+    weakWords: [...weakWords.values()]
+      .map((item) => ({
+        ...item,
+        average: item.count ? Math.round(item.total / item.count) : 0,
+      }))
+      .sort((a, b) => b.count - a.count || a.average - b.average),
+  };
+}
+
+function parseWordBankText(text) {
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const parsed = [];
+  const duplicated = new Set();
+
+  lines.forEach((line) => {
+    const parts = line.includes("\t")
+      ? line.split("\t").map((part) => part.trim())
+      : line.split(/[,，]/).map((part) => part.trim());
+    const [word, phonetic = "", meaning = "", example = "", importantText = ""] = parts;
+
+    if (!word || !/^[a-zA-Z][a-zA-Z\s'-]*$/.test(word)) {
+      return;
+    }
+
+    const normalizedWord = word.toLowerCase();
+    if (duplicated.has(normalizedWord)) {
+      return;
+    }
+    duplicated.add(normalizedWord);
+
+    parsed.push({
+      word: word.trim(),
+      phonetic,
+      meaning,
+      example: example || `Please read the word ${word.trim()} clearly.`,
+      important: /^(1|true|yes|y|重点|是)$/i.test(importantText),
+    });
+  });
+
+  return parsed;
+}
+
+function importWordBankFromText() {
+  const text = els.wordBankText.value.trim();
+  const parsed = parseWordBankText(text);
+
+  if (parsed.length === 0) {
+    els.wordBankStatus.textContent = "没有识别到有效单词。请按“单词, 音标, 中文释义, 例句, 是否重点”的格式粘贴。";
+    els.wordBankStatus.className = "content-status is-error";
+    return;
+  }
+
+  words = parsed;
+  state.activeWordIndex = 0;
+  saveWordBank();
+  renderWords(els.wordSearch.value);
+  renderActiveWord();
+  resetScorePanel();
+  renderMetrics();
+  els.wordBankStatus.textContent = `已导入 ${parsed.length} 个单词，学生端词表已更新。`;
+  els.wordBankStatus.className = "content-status is-ok";
+}
+
+function resetWordBankToDefault() {
+  if (!confirm("确定恢复默认试点词表吗？当前导入的本地词表会被替换。")) {
+    return;
+  }
+
+  localStorage.removeItem(wordBankKey);
+  words = [...defaultWords];
+  state.activeWordIndex = 0;
+  els.wordBankText.value = "";
+  renderWords(els.wordSearch.value);
+  renderActiveWord();
+  resetScorePanel();
+  renderMetrics();
+  els.wordBankStatus.textContent = "已恢复默认试点词表。";
+  els.wordBankStatus.className = "content-status is-ok";
+}
+
+function renderWordBankInfo() {
+  if (!els.wordBankInfo) return;
+
+  const importantCount = words.filter((item) => item.important).length;
+  const custom = localStorage.getItem(wordBankKey) ? "老师导入词表" : "默认试点词表";
+  const preview = words
+    .slice(0, 8)
+    .map(
+      (item) => `
+        <div class="word-bank-item">
+          <strong>${escapeHtml(item.word)}</strong>
+          <span>${escapeHtml(item.meaning || "未填写释义")}</span>
+        </div>
+      `,
+    )
+    .join("");
+
+  els.wordBankInfo.innerHTML = `
+    <div class="word-bank-item">
+      <strong>${custom}</strong>
+      <span>共 ${words.length} 个单词，其中 ${importantCount} 个重点词。</span>
+    </div>
+    ${preview}
+  `;
+}
+
+function parseScenarioBankText(text) {
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const usedIds = new Set();
+  return lines
+    .map((line, index) => {
+      const parts = line.split("|").map((part) => part.trim()).filter(Boolean);
+      const [title, opening, ...replies] = parts;
+      if (!title || !opening) return null;
+      let id = title.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-").replace(/^-|-$/g, "");
+      if (!id) id = `scenario-${index + 1}`;
+      if (usedIds.has(id)) id = `${id}-${index + 1}`;
+      usedIds.add(id);
+      return normalizeScenarioItem({
+        id,
+        title,
+        opening,
+        replies,
+      });
+    })
+    .filter(Boolean);
+}
+
+function importScenarioBankFromText() {
+  const text = els.scenarioBankText.value.trim();
+  const parsed = parseScenarioBankText(text);
+
+  if (parsed.length === 0) {
+    els.scenarioBankStatus.textContent = "没有识别到有效情景。请按“场景名称 | 开场问题 | 追问1 | 追问2”的格式粘贴。";
+    els.scenarioBankStatus.className = "content-status is-error";
+    return;
+  }
+
+  scenarios = parsed;
+  state.scenario = scenarios[0];
+  state.dialogueStep = 0;
+  saveScenarioBank();
+  renderScenarios();
+  startScenario(scenarios[0].id);
+  renderMetrics();
+  els.scenarioBankStatus.textContent = `已导入 ${parsed.length} 个情景，学生端情景对话已更新。`;
+  els.scenarioBankStatus.className = "content-status is-ok";
+}
+
+function resetScenarioBankToDefault() {
+  if (!confirm("确定恢复默认情景对话吗？当前导入的本地情景会被替换。")) {
+    return;
+  }
+
+  localStorage.removeItem(scenarioBankKey);
+  scenarios = [...defaultScenarios];
+  state.scenario = scenarios[0];
+  state.dialogueStep = 0;
+  els.scenarioBankText.value = "";
+  renderScenarios();
+  startScenario(scenarios[0].id);
+  renderMetrics();
+  els.scenarioBankStatus.textContent = "已恢复默认情景对话。";
+  els.scenarioBankStatus.className = "content-status is-ok";
+}
+
+function renderScenarioBankInfo() {
+  if (!els.scenarioBankInfo) return;
+
+  const custom = localStorage.getItem(scenarioBankKey) ? "老师导入情景" : "默认试点情景";
+  const preview = scenarios
+    .slice(0, 8)
+    .map(
+      (item) => `
+        <div class="word-bank-item">
+          <strong>${escapeHtml(item.title)}</strong>
+          <span>${escapeHtml(item.opening)}</span>
+          <span>${item.replies.length} 条追问/反馈</span>
+        </div>
+      `,
+    )
+    .join("");
+
+  els.scenarioBankInfo.innerHTML = `
+    <div class="word-bank-item">
+      <strong>${custom}</strong>
+      <span>共 ${scenarios.length} 个情景。</span>
+    </div>
+    ${preview}
+  `;
+}
+
+function renderTeacherDashboard() {
+  if (!els.teacherSummary) return;
+
+  const stats = buildTeacherStats();
+  const totalPractice = state.records.scores.length;
+  const studentCount = stats.students.length;
+  const classAverage =
+    totalPractice === 0
+      ? "--"
+      : Math.round(state.records.scores.reduce((total, item) => total + (Number(item.score) || 0), 0) / totalPractice);
+  const weakWordCount = stats.weakWords.length;
+
+  els.teacherSummary.innerHTML = [
+    ["学生人数", studentCount],
+    ["练习次数", totalPractice],
+    ["班级均分", classAverage],
+    ["薄弱单词", weakWordCount],
+  ]
+    .map(
+      ([label, value]) => `
+        <article class="metric-card">
+          <span>${label}</span>
+          <strong>${value}</strong>
+        </article>
+      `,
+    )
+    .join("");
+
+  if (stats.students.length === 0) {
+    els.teacherStudentTable.innerHTML = '<p class="empty-text">暂无学生练习数据</p>';
+  } else {
+    els.teacherStudentTable.innerHTML = `
+      <div class="teacher-row teacher-row-head">
+        <span>学生</span>
+        <span>手机号</span>
+        <span>班级</span>
+        <span>练习</span>
+        <span>均分</span>
+        <span>最近练习</span>
+        <span>需复习</span>
+        <span>系统点评</span>
+      </div>
+      ${stats.students
+        .map(
+          (student) => `
+            <div class="teacher-row">
+              <strong>${student.name}</strong>
+              <span>${student.phone || "--"}</span>
+              <span>${student.studentClass || "--"}</span>
+              <span>${student.count} 次</span>
+              <span>${student.average} 分</span>
+              <span>${student.latest || "--"}</span>
+              <span>${student.reviewWords.slice(0, 4).join("、") || "暂无"}</span>
+              <span>${buildStudentComment(student)}</span>
+            </div>
+          `,
+        )
+        .join("")}
+    `;
+  }
+
+  if (stats.weakWords.length === 0) {
+    els.teacherWeakWords.innerHTML = '<p class="empty-text">暂无薄弱单词</p>';
+  } else {
+    els.teacherWeakWords.innerHTML = stats.weakWords
+      .slice(0, 12)
+      .map(
+        (item) => `
+          <button class="weak-word-card" type="button" data-word="${item.word}">
+            <strong>${item.word}</strong>
+            <span>${item.count} 次低分，均分 ${item.average}</span>
+          </button>
+        `,
+      )
+      .join("");
+
+    els.teacherWeakWords.querySelectorAll("[data-word]").forEach((button) => {
+      button.addEventListener("click", () => {
+        selectWord(words.findIndex((item) => item.word === button.dataset.word));
+        switchTab("words");
+      });
+    });
+  }
+}
+
+function buildStudentComment(student) {
+  if (student.count === 0) {
+    return "暂无练习数据";
+  }
+  if (student.average >= 90) {
+    return "表现优秀，可增加句子和情景对话练习。";
+  }
+  if (student.average >= 80) {
+    return "基础较好，建议保持每日跟读。";
+  }
+  if (student.average >= 60) {
+    return "需要持续练习薄弱单词，优先复习低分词。";
+  }
+  return "建议老师重点关注，先从标准发音和录音清晰度开始排查。";
 }
 
 function formatScoreDetail(item) {
@@ -820,6 +1423,10 @@ function switchTab(tab) {
 function exportRecords() {
   const headers = [
     "学生姓名",
+    "手机号",
+    "学号",
+    "班级",
+    "学生标识",
     "单词",
     "评分来源",
     "页面得分",
@@ -831,11 +1438,16 @@ function exportRecords() {
     "完整度",
     "标准度",
     "识别结果/备注",
+    "系统点评",
     "讯飞SID",
     "时间",
   ];
   const rows = state.records.scores.map((item) => [
     item.studentName,
+    item.studentPhone || "",
+    item.studentNo || "",
+    item.studentClass || "",
+    item.studentKey || "",
     item.word,
     item.source || "",
     item.score,
@@ -847,6 +1459,7 @@ function exportRecords() {
     item.integrityScore ?? "",
     item.standardScore ?? "",
     item.recognized,
+    item.comment || buildScoreComment(Number(item.score) || 0, item),
     item.sid || "",
     item.time,
   ]);
@@ -868,6 +1481,9 @@ function resetDemo() {
   localStorage.removeItem(storageKey);
   state.records = loadRecords();
   els.studentName.value = "";
+  els.studentPhone.value = "";
+  els.studentNo.value = "";
+  els.studentClass.value = "";
   renderWords(els.wordSearch.value);
   renderMetrics();
   resetScorePanel();
@@ -878,11 +1494,33 @@ els.studentName.addEventListener("input", (event) => {
   state.records.studentName = event.target.value.trim();
   saveRecords();
 });
+els.studentPhone.addEventListener("input", (event) => {
+  state.records.studentPhone = event.target.value.replace(/[^\d]/g, "").slice(0, 11);
+  els.studentPhone.value = state.records.studentPhone;
+  saveRecords();
+});
+els.studentNo.addEventListener("input", (event) => {
+  state.records.studentNo = event.target.value.trim();
+  saveRecords();
+});
+els.studentClass.addEventListener("input", (event) => {
+  state.records.studentClass = event.target.value.trim();
+  saveRecords();
+});
 els.wordSearch.addEventListener("input", (event) => renderWords(event.target.value));
 els.speakWord.addEventListener("click", () => speak(activeWord().word));
 els.recordButton.addEventListener("click", toggleRecording);
 els.playRecord.addEventListener("click", () => els.audioPlayer.play());
 els.xfScoreButton.addEventListener("click", startXfScore);
+els.audioInputSelect.addEventListener("change", (event) => {
+  state.selectedAudioDeviceId = event.target.value;
+  setMicDeviceStatus("已切换麦克风，请先点“检测麦克风”确认有声音。", "warning");
+});
+els.checkMicButton.addEventListener("click", checkMicrophone);
+els.importWordBank.addEventListener("click", importWordBankFromText);
+els.resetWordBank.addEventListener("click", resetWordBankToDefault);
+els.importScenarioBank.addEventListener("click", importScenarioBankFromText);
+els.resetScenarioBank.addEventListener("click", resetScenarioBankToDefault);
 els.manualScoreButton.addEventListener("click", scoreManualInput);
 els.markKnown.addEventListener("click", () => markWord("known"));
 els.markReview.addEventListener("click", () => markWord("review"));
@@ -895,8 +1533,14 @@ els.exportRecords.addEventListener("click", exportRecords);
 els.resetDemo.addEventListener("click", resetDemo);
 
 els.studentName.value = state.records.studentName || "";
+els.studentPhone.value = state.records.studentPhone || "";
+els.studentNo.value = state.records.studentNo || "";
+els.studentClass.value = state.records.studentClass || "";
 renderWords();
 renderActiveWord();
 renderScenarios();
 startScenario(scenarios[0].id);
 renderMetrics();
+refreshAudioInputs().catch(() => {
+  setMicDeviceStatus("无法读取麦克风设备列表，请允许麦克风权限后重试。", "warning");
+});

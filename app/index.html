@@ -17,15 +17,31 @@
           </div>
         </div>
 
-        <label class="student-box">
-          <span>学生姓名</span>
-          <input id="studentName" type="text" placeholder="请输入姓名" />
-        </label>
+        <div class="student-box">
+          <label>
+            <span>学生姓名</span>
+            <input id="studentName" type="text" placeholder="请输入姓名" />
+          </label>
+          <label>
+            <span>手机号</span>
+            <input id="studentPhone" type="tel" inputmode="tel" placeholder="必填，用于区分学生" />
+          </label>
+          <label>
+            <span>学号</span>
+            <input id="studentNo" type="text" placeholder="可选" />
+          </label>
+          <label>
+            <span>班级</span>
+            <input id="studentClass" type="text" placeholder="可选" />
+          </label>
+          <p id="studentIdentityHint">学生信息会自动保存在本机，后续可升级为短信登录。</p>
+        </div>
 
         <nav class="nav-tabs" aria-label="主要功能">
           <button class="nav-tab active" data-tab="words" type="button">单词跟读</button>
           <button class="nav-tab" data-tab="dialogue" type="button">情景对话</button>
           <button class="nav-tab" data-tab="records" type="button">练习记录</button>
+          <button class="nav-tab" data-tab="teacher" type="button">老师后台</button>
         </nav>
 
         <div class="status-panel">
@@ -81,6 +97,17 @@
                 <button class="xf-button" id="xfScoreButton" type="button">讯飞正式评分</button>
                 <audio id="audioPlayer" controls hidden></audio>
                 <audio id="xfAudioPlayer" controls hidden></audio>
+              </div>
+
+              <div class="mic-device-panel">
+                <label>
+                  <span>麦克风设备</span>
+                  <select id="audioInputSelect" aria-label="选择麦克风设备">
+                    <option value="">默认麦克风</option>
+                  </select>
+                </label>
+                <button class="secondary-button" id="checkMicButton" type="button">检测麦克风</button>
+                <p id="micDeviceStatus">首次使用请允许麦克风，检测到声音后再开始评分。</p>
               </div>
 
               <div class="mic-level" id="micLevelPanel" hidden>
@@ -169,6 +196,78 @@
             <div class="review-panel">
               <h4>评分记录</h4>
               <div id="scoreHistory" class="score-history"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="tab-panel" id="teacherPanel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Teacher Dashboard</p>
+              <h3>老师后台</h3>
+            </div>
+          </div>
+
+          <div class="teacher-note">
+            当前为本地试用版后台，先汇总本浏览器产生的练习数据。后续接入云服务器后，可升级为全班学生数据看板。
+          </div>
+
+          <div class="record-grid teacher-summary" id="teacherSummary"></div>
+
+          <div class="teacher-layout">
+            <div class="review-panel">
+              <h4>学生练习概览</h4>
+              <div class="teacher-table" id="teacherStudentTable"></div>
+            </div>
+            <div class="review-panel">
+              <h4>班级薄弱单词</h4>
+              <div class="teacher-weak-list" id="teacherWeakWords"></div>
+            </div>
+          </div>
+
+          <div class="teacher-layout teacher-content-layout">
+            <div class="review-panel">
+              <h4>课程单词导入</h4>
+              <p class="content-help">
+                每行一个单词，支持逗号或 Tab 分隔：单词, 音标, 中文释义, 例句, 是否重点。最后一列填 1/true/重点 即表示重点词。
+              </p>
+              <textarea
+                id="wordBankText"
+                class="word-bank-input"
+                placeholder="例如：&#10;banner, /'baenər/, 横幅；旗帜, A welcome banner was hanging above the gate., 1&#10;budget, /'bʌdʒɪt/, 预算, Students should learn how to manage a monthly budget., 重点"
+              ></textarea>
+              <div class="content-actions">
+                <button class="primary-button" id="importWordBank" type="button">导入为当前词表</button>
+                <button class="secondary-button" id="resetWordBank" type="button">恢复默认词表</button>
+              </div>
+              <p class="content-status" id="wordBankStatus">导入后会立即更新学生端单词列表。</p>
+            </div>
+            <div class="review-panel">
+              <h4>当前词表</h4>
+              <div class="word-bank-info" id="wordBankInfo"></div>
+            </div>
+          </div>
+
+          <div class="teacher-layout teacher-content-layout">
+            <div class="review-panel">
+              <h4>情景对话导入</h4>
+              <p class="content-help">
+                每行一个场景，使用 | 分隔：场景名称 | 开场问题 | 追问1 | 追问2 | 结束建议。学生端会自动更新情景对话下拉框。
+              </p>
+              <textarea
+                id="scenarioBankText"
+                class="word-bank-input"
+                placeholder="例如：&#10;校园问路 | Excuse me, how can I get to the library? | Which building are you looking for? | Do you usually study there? | Good. Try to answer with a complete sentence.&#10;课堂发言 | What did you learn from this unit? | Can you give one example? | Why is it useful? | Nice answer. Please speak a little more slowly."
+              ></textarea>
+              <div class="content-actions">
+                <button class="primary-button" id="importScenarioBank" type="button">导入情景对话</button>
+                <button class="secondary-button" id="resetScenarioBank" type="button">恢复默认场景</button>
+              </div>
+              <p class="content-status" id="scenarioBankStatus">导入后会立即更新学生端情景对话。</p>
+            </div>
+            <div class="review-panel">
+              <h4>当前情景</h4>
+              <div class="word-bank-info" id="scenarioBankInfo"></div>
             </div>
           </div>
         </section>
